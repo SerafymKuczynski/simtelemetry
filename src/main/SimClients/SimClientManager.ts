@@ -1,13 +1,7 @@
-import { ipcMain, IpcMessageEvent, WebContents } from "electron";
+import { ipcMain, IpcMessageEvent } from "electron";
 import DataRecorder from "../DataRecorder";
 import { default as PC2Receiver } from "./PC2/PC2Receiver";
 import SimClient from "./SimClient";
-
-let wc: WebContents | undefined;
-
-export function init(wcontents: WebContents) {
-    wc = wcontents;
-}
 
 // events
 // clientStart
@@ -28,8 +22,8 @@ const clients = [
     { name: "Project Cars 2", clazz: PC2Receiver }
 ];
 
-ipcMain.on("getClients", () => {
-    wc!.send("getClientsResult", clients.map((x) => x.name));
+ipcMain.on("getClients", (ev: IpcMessageEvent) => {
+    ev.sender.send("getClientsResult", clients.map((x) => x.name));
 });
 
 ipcMain.on("startClient", (ev: IpcMessageEvent, name: string) => {
@@ -37,13 +31,13 @@ ipcMain.on("startClient", (ev: IpcMessageEvent, name: string) => {
     console.log("START CLIENT");
 
     if (activeClient) {
-        wc!.send("clientError", "A client is already running.");
+        ev.sender.send("clientError", "A client is already running.");
         return;
     }
 
     const clientDescriptor = clients.find((x) => x.name === name);
     if (!clientDescriptor) {
-        wc!.send("clientError", "Failed to find client " + name);
+        ev.sender.send("clientError", "Failed to find client " + name);
         return;
     }
 
@@ -53,45 +47,45 @@ ipcMain.on("startClient", (ev: IpcMessageEvent, name: string) => {
         activeClient.on("stop", () => {
             activeClient!.removeAllListeners();
             activeClient = undefined;
-            wc!.send("clientStop");
+            ev.sender.send("clientStop");
         });
-        activeClient.on("status", (s) => { wc!.send("clientStatusUpdate", s); });
-        activeClient.on("error", (e) => { wc!.send("clientError", e); });
+        activeClient.on("status", (s) => { ev.sender.send("clientStatusUpdate", s); });
+        activeClient.on("error", (e) => { ev.sender.send("clientError", e); });
         activeClient.on("data", (d) => { activeRecorder!.savePoint(d); });
         activeClient.start();
-        wc!.send("clientStart");
+        ev.sender.send("clientStart");
     } catch (err) {
-        wc!.send("clientError", "Failed to start client.");
+        ev.sender.send("clientError", "Failed to start client.");
     }
 
 });
 
-ipcMain.on("stopClient", () => {
+ipcMain.on("stopClient", (ev: IpcMessageEvent) => {
 
     if (!activeClient) {
-        wc!.send("clientError", "Failed to stop client: No client active");
+        ev.sender.send("clientError", "Failed to stop client: No client active");
         return;
     }
 
     activeClient.removeAllListeners();
     activeClient.stop();
     activeClient = undefined;
-    wc!.send("clientStop");
+    ev.sender.send("clientStop");
 
 });
 
 ipcMain.on("saveRecording", async (ev: IpcMessageEvent, path: string) => {
 
     if (!activeRecorder) {
-        wc!.send("saveRecordingResult", "No records.");
+        ev.sender.send("saveRecordingResult", "No records.");
         return;
     }
 
     try {
         await activeRecorder.saveToFile(path);
-        wc!.send("saveRecordingResult");
+        ev.sender.send("saveRecordingResult");
     } catch (err) {
-        wc!.send("saveRecordingResult", err);
+        ev.sender.send("saveRecordingResult", err);
     }
 
     activeRecorder = undefined;

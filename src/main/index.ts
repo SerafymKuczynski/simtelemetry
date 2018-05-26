@@ -2,7 +2,7 @@ import { app, BrowserWindow } from "electron";
 import * as path from "path";
 import { format as formatUrl } from "url";
 
-import * as SimClientManager from "./SimClients/SimClientManager";
+import "./SimClients/SimClientManager";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -11,7 +11,6 @@ export let mainWindow: BrowserWindow | null = null;
 
 function createMainWindow() {
     const window = new BrowserWindow();
-    SimClientManager.init(window.webContents);
 
     if (isDevelopment) {
         window.webContents.openDevTools();
