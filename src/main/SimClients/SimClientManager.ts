@@ -1,8 +1,8 @@
 import { ipcMain, IpcMessageEvent, WebContents } from "electron";
+import DataRecorder from "../DataRecorder";
 import { default as PC2Receiver } from "./PC2/PC2Receiver";
 import SimClient from "./SimClient";
 
-import { mainWindow } from "../index";
 let wc: WebContents | undefined;
 
 export function init(wcontents: WebContents) {
@@ -16,18 +16,20 @@ export function init(wcontents: WebContents) {
 // clientError
 
 // commands
-// getClients(): string[]
-// startClient(clientName: string): void
-// stopClient(): void
+// getClients() -> getClientsResult(clients: string[])
+// startClient(clientName: string)
+// stopClient()
+// saveRecording(path: string) -> saveRecordingResult(error: string | undefined)
 
 let activeClient: SimClient | undefined;
+let activeRecorder: DataRecorder | undefined;
 
 const clients = [
     { name: "Project Cars 2", clazz: PC2Receiver }
 ];
 
-ipcMain.on("getClients", (ev: IpcMessageEvent) => {
-    ev.returnValue = clients.map((x) => x.name);
+ipcMain.on("getClients", () => {
+    wc!.send("getClientsResult", clients.map((x) => x.name));
 });
 
 ipcMain.on("startClient", (ev: IpcMessageEvent, name: string) => {
@@ -47,6 +49,7 @@ ipcMain.on("startClient", (ev: IpcMessageEvent, name: string) => {
 
     try {
         activeClient = new (clientDescriptor.clazz)();
+        activeRecorder = new DataRecorder();
         activeClient.on("stop", () => {
             activeClient!.removeAllListeners();
             activeClient = undefined;
@@ -54,6 +57,7 @@ ipcMain.on("startClient", (ev: IpcMessageEvent, name: string) => {
         });
         activeClient.on("status", (s) => { wc!.send("clientStatusUpdate", s); });
         activeClient.on("error", (e) => { wc!.send("clientError", e); });
+        activeClient.on("data", (d) => { activeRecorder!.savePoint(d); });
         activeClient.start();
         wc!.send("clientStart");
     } catch (err) {
@@ -73,5 +77,23 @@ ipcMain.on("stopClient", () => {
     activeClient.stop();
     activeClient = undefined;
     wc!.send("clientStop");
+
+});
+
+ipcMain.on("saveRecording", async (ev: IpcMessageEvent, path: string) => {
+
+    if (!activeRecorder) {
+        wc!.send("saveRecordingResult", "No records.");
+        return;
+    }
+
+    try {
+        await activeRecorder.saveToFile(path);
+        wc!.send("saveRecordingResult");
+    } catch (err) {
+        wc!.send("saveRecordingResult", err);
+    }
+
+    activeRecorder = undefined;
 
 });
