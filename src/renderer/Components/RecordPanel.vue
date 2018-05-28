@@ -1,20 +1,17 @@
 <template>
-    <v-layout>        
-        <v-flex lg4 md6 xs12>
-            <dashboard-item title="Record">
-                <v-select
-                    v-model="selectedClient"
-                    placeholder="Choose..."
-                    :items="clients"
-                />
-                <v-btn @click="toggleRecording">
-                    {{ isRecording ? "Stop" : "Start" }} Recording
-                </v-btn>
-                <div color="text--error" v-if="errorText">{{ errorText }}</div>
-                <div v-if="statusText">{{ statusText }}</div>
-            </dashboard-item>
-        </v-flex>        
-    </v-layout>
+    <div>
+        <v-select
+            v-model="selectedClient"
+            placeholder="Choose..."
+            :items="clients"
+        />
+        <v-btn @click="toggleRecording">
+            <span v-if="isRecording" class="recordDot mr-2">&#x2B24;</span>
+            {{ isRecording ? "Stop" : "Start" }} Recording
+        </v-btn>
+        <div color="text--error" v-if="errorText">{{ errorText }}</div>
+        <div v-if="statusText">{{ statusText }}</div>
+    </div>
 </template>
 
 <script lang="ts">
@@ -45,6 +42,7 @@ export default class RecordPanel extends Vue {
     mounted() {
         ipcRenderer.on("clientStart", () => { this.isRecording = true; });
         ipcRenderer.on("clientStop", () => { this.isRecording = false; });
+        ipcRenderer.on("clientError", (ev: IpcMessageEvent, e: string) => { console.log(e); });
         ipcRenderer.on("clientStatusUpdate", (ev: IpcMessageEvent, s: string) => { this.statusText = s; });
         ipcRenderer.once("getClientsResult", (ev: IpcMessageEvent, c: string[]) => { this.clients = c; });
         ipcRenderer.send("getClients");
@@ -54,5 +52,12 @@ export default class RecordPanel extends Vue {
 </script>
 
 <style>
+@keyframes recordAnimation {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 
+.recordDot {
+    animation: recordAnimation 0.5s alternate 0s infinite;
+}
 </style>
