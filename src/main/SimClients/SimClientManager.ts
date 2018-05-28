@@ -1,6 +1,6 @@
-import { ipcMain, IpcMessageEvent } from "electron";
-import DataRecorder from "../DataRecorder";
-import { default as PC2Receiver } from "./PC2/PC2Receiver";
+import { dialog, ipcMain, IpcMessageEvent } from "electron";
+
+import { default as PC2SimClient } from "./PC2SimClient";
 import SimClient from "./SimClient";
 
 // events
@@ -13,13 +13,12 @@ import SimClient from "./SimClient";
 // getClients() -> getClientsResult(clients: string[])
 // startClient(clientName: string)
 // stopClient()
-// saveRecording(path: string) -> saveRecordingResult(error: string | undefined)
+// saveRecording() -> saveRecordingResult(error: string | undefined)
 
 let activeClient: SimClient | undefined;
-let activeRecorder: DataRecorder | undefined;
 
 const clients = [
-    { name: "Project Cars 2", clazz: PC2Receiver }
+    { name: "Project Cars 2", clazz: PC2SimClient }
 ];
 
 ipcMain.on("getClients", (ev: IpcMessageEvent) => {
@@ -31,8 +30,8 @@ ipcMain.on("startClient", (ev: IpcMessageEvent, name: string) => {
     console.log("START CLIENT");
 
     if (activeClient) {
-        ev.sender.send("clientError", "A client is already running.");
-        return;
+        activeClient.removeAllListeners();
+        activeClient = undefined;
     }
 
     const clientDescriptor = clients.find((x) => x.name === name);
@@ -43,15 +42,9 @@ ipcMain.on("startClient", (ev: IpcMessageEvent, name: string) => {
 
     try {
         activeClient = new (clientDescriptor.clazz)();
-        activeRecorder = new DataRecorder();
-        activeClient.on("stop", () => {
-            activeClient!.removeAllListeners();
-            activeClient = undefined;
-            ev.sender.send("clientStop");
-        });
+        activeClient.on("stop", () => { ev.sender.send("clientStop"); });
         activeClient.on("status", (s) => { ev.sender.send("clientStatusUpdate", s); });
         activeClient.on("error", (e) => { ev.sender.send("clientError", e); });
-        activeClient.on("data", (d) => { activeRecorder!.savePoint(d); });
         activeClient.start();
         ev.sender.send("clientStart");
     } catch (err) {
@@ -67,27 +60,31 @@ ipcMain.on("stopClient", (ev: IpcMessageEvent) => {
         return;
     }
 
-    activeClient.removeAllListeners();
     activeClient.stop();
-    activeClient = undefined;
-    ev.sender.send("clientStop");
 
 });
 
-ipcMain.on("saveRecording", async (ev: IpcMessageEvent, path: string) => {
+ipcMain.on("saveRecording", async (ev: IpcMessageEvent) => {
 
-    if (!activeRecorder) {
-        ev.sender.send("saveRecordingResult", "No records.");
+    if (!activeClient) {
+        ev.sender.send("saveRecordingResult", "No active client.");
+        return;
+    }
+
+    const path = dialog.showSaveDialog({
+        title: "Save Recording",
+        filters: [{ name: "SimTelemetry Recording", extensions: ["str"] }]
+    });
+    if (!path) {
+        ev.sender.send("saveRecordingResult", "User cancelled");
         return;
     }
 
     try {
-        await activeRecorder.saveToFile(path);
+        await activeClient.saveToFile(path);
         ev.sender.send("saveRecordingResult");
     } catch (err) {
         ev.sender.send("saveRecordingResult", err);
     }
-
-    activeRecorder = undefined;
 
 });

@@ -1,16 +1,20 @@
 import { createSocket, RemoteInfo, Socket } from "dgram";
-import SimClient from "../SimClient";
-import * as Api from "./Api/Definitions";
-import { parseMessage } from "./Api/MessageParser";
+import * as fs from "fs";
 
-export default class PC2Receiver extends SimClient {
+import * as Api from "../../api/PC2/Definitions";
+import { parseMessage } from "../../api/PC2/MessageParser";
+import SimClient from "./SimClient";
+
+export default class PC2SimClient extends SimClient {
+
+    public readonly game = "PC2";
 
     private readonly SMS_UDP_PORT = 5606;
-    private readonly SMS_UDP_MAX_PACKETSIZE = 1500;
-
+    // private readonly SMS_UDP_MAX_PACKETSIZE = 1500;
     private readonly udp: Socket = createSocket("udp4");
 
     private messageCounter = 0;
+    private dataPoints: Buffer[] = [];
 
     constructor() {
         super();
@@ -26,6 +30,21 @@ export default class PC2Receiver extends SimClient {
     public stop(): void {
         this._isRunning = false;
         this.udp.close();
+        this.emit("stop");
+    }
+
+    protected writeData(ws: fs.WriteStream) {
+
+        // write PC2 specific header
+        const b = Buffer.alloc(16);
+        b.writeUInt32LE(this.dataPoints.length, 0);
+        ws.write(b);
+
+        // write data packets
+        for (const dbuff of this.dataPoints) {
+            ws.write(dbuff);
+        }
+
     }
 
     private parseMessage(msg: Buffer, rinfo: RemoteInfo): void {
@@ -42,10 +61,11 @@ export default class PC2Receiver extends SimClient {
 
         if (header.PacketType === Api.PacketTypes.CarPhysics) {
             this.messageCounter++;
-            this.emit("status", `Receives ${this.messageCounter} packets.`);
-            const cpm = parseMessage(msg, Api.TelemetryDataTypes, hpm.positionInBuffer);
-            const tm = cpm.messageObject as Api.ITelemetryData;
-            console.log(tm.EngineSpeed);
+            this.emit("status", `Received ${this.messageCounter} packets.`);
+            const size = Api.PacketTypeInformations[header.PacketType].size;
+            const b = Buffer.allocUnsafe(size);
+            msg.copy(b, 0, 0, size);
+            this.dataPoints.push(b);
         }
 
     }

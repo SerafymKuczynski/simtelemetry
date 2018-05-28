@@ -170,3 +170,14 @@ export interface ITelemetryData {
     DPad: number;
     TyreCompound: string[];
 }
+
+export const PacketHeaderSize = 12;
+export const PacketTypeInformations = [
+    { size: 538,    td: TelemetryDataTypes },
+    { size: 308,    td: undefined },
+    { size: 1040,   td: undefined },
+    { size: 993,    td: undefined },
+    { size: 24,     td: undefined },
+    { size: 784,    td: undefined },
+    { size: 0,      td: undefined }
+];

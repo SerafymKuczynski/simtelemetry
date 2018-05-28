@@ -17,6 +17,7 @@
 <script lang="ts">
 import Vue from "vue";
 import Component from "vue-class-component";
+import { Watch } from "vue-property-decorator";
 import DashboardItem from "@/Components/DashboardItem.vue";
 import { ipcRenderer, IpcMessageEvent } from "electron";
 
@@ -30,6 +31,13 @@ export default class RecordPanel extends Vue {
     public statusText = "";
     public selectedClient = "";
     public clients: string[] = [];
+
+    @Watch("clients")
+    onClientsChanged() {
+        if (this.clients.length >= 1) {
+            this.selectedClient = this.clients[0];
+        }
+    }
 
     toggleRecording() {
         if (this.isRecording) {
