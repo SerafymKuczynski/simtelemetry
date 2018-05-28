@@ -30,7 +30,7 @@ function getValue(typeDef: string, buffer: Buffer, position: number): { newPosit
             throw new Error("Invalid type descriptor: String missing length in " + typeDef);
         } else {
             const length = Number.parseInt(result[1]);
-            buffer.toString("utf-8", position, position + length);
+            buffer.toString("utf-8", position, position + length).replace(/\0/g, "");
             position += length;
         }
     }
