@@ -2,6 +2,9 @@
 // ^\s*((?:signed|unsigned|char|short|float|int| )+)(?:s|m)(\w+)(?:\[\d\])?;.*$
 // $2: "$1",
 
+// (\w)+: "((\w| )+)"(,?)
+// { name: "$1", type: "$2" }$4
+
 export const PacketTypes = {
     CarPhysics: 0,
     RaceDefinition: 1,
@@ -14,14 +17,14 @@ export const PacketTypes = {
     ParticipantVehicleNames: 8
 };
 
-export const PacketBaseTypes = {
-    PacketNumber: "unsigned int ",
-    CategoryPacketNumber: "unsigned int ",
-    PartialPacketIndex: "unsigned char ",
-    PartialPacketNumber: "unsigned char ",
-    PacketType: "unsigned char ",
-    PacketVersion: "unsigned char "
-};
+export const PacketBaseTypes = [
+    { name: "PacketNumber", type: "unsigned int " },
+    { name: "CategoryPacketNumber", type: "unsigned int " },
+    { name: "PartialPacketIndex", type: "unsigned char " },
+    { name: "PartialPacketNumber", type: "unsigned char " },
+    { name: "PacketType", type: "unsigned char " },
+    { name: "PacketVersion", type: "unsigned char " }
+];
 
 export interface IPacketBase {
     PacketNumber: number;
@@ -32,77 +35,77 @@ export interface IPacketBase {
     PacketVersion: number;
 }
 
-export const TelemetryDataTypes = {
+export const TelemetryDataTypes = [
     // Participant info
-    ViewedParticipantIndex: "signed char ",
+    { name: "ViewedParticipantIndex", type: "signed char " },
     // Unfiltered input
-    UnfilteredThrottle: "unsigned char ",
-    UnfilteredBrake: "unsigned char ",
-    UnfilteredSteering: "signed char ",
-    UnfilteredClutch: "unsigned char ",
+    { name: "UnfilteredThrottle", type: "unsigned char " },
+    { name: "UnfilteredBrake", type: "unsigned char " },
+    { name: "UnfilteredSteering", type: "signed char " },
+    { name: "UnfilteredClutch", type: "unsigned char " },
     // Car state
-    CarFlags: "unsigned char ",
-    OilTempCelsius: "signed short ",
-    OilPressureKPa: "unsigned short ",
-    WaterTempCelsius: "signed short ",
-    WaterPressureKpa: "unsigned short ",
-    FuelPressureKpa: "unsigned short ",
-    FuelCapacity: "unsigned char ",
-    Brake: "unsigned char ",
-    Throttle: "unsigned char ",
-    Clutch: "unsigned char ",
-    FuelLevel: "float ",
-    Speed: "float ",
-    Rpm: "unsigned short ",
-    MaxRpm: "unsigned short ",
-    Steering: "signed char ",
-    GearNumGears: "unsigned char ",
-    BoostAmount: "unsigned char ",
-    CrashState: "unsigned char ",
-    OdometerKM: "float ",
-    Orientation: "float array 3",
-    LocalVelocity: "float array 3",
-    WorldVelocity: "float array 3",
-    AngularVelocity: "float array 3",
-    LocalAcceleration: "float array 3",
-    WorldAcceleration: "float array 3",
-    ExtentsCentre: "float array 3",
-    TyreFlags: "unsigned char array 4",
-    Terrain: "unsigned char array 4",
-    TyreY: "float array 4",
-    TyreRPS: "float array 4",
-    TyreTemp: "unsigned char array 4",
-    TyreHeightAboveGround: "float array 4",
-    TyreWear: "unsigned char array 4",
-    BrakeDamage: "unsigned char array 4",
-    SuspensionDamage: "unsigned char array 4",
-    BrakeTempCelsius: "signed short array 4",
-    TyreTreadTemp: "unsigned short array 4",
-    TyreLayerTemp: "unsigned short array 4",
-    TyreCarcassTemp: "unsigned short array 4",
-    TyreRimTemp: "unsigned short array 4",
-    TyreInternalAirTemp: "unsigned short array 4",
-    TyreTempLeft: "unsigned short array 4",
-    TyreTempCenter: "unsigned short array 4",
-    TyreTempRight: "unsigned short array 4",
-    WheelLocalPositionY: "float array 4",
-    RideHeight: "float array 4",
-    SuspensionTravel: "float array 4",
-    SuspensionVelocity: "float array 4",
-    SuspensionRideHeight: "unsigned short array 4",
-    AirPressure: "unsigned short array 4",
-    EngineSpeed: "float ",
-    EngineTorque: "float ",
-    Wings: "unsigned char array 2",
-    HandBrake: "unsigned char ",
+    { name: "CarFlags", type: "unsigned char " },
+    { name: "OilTempCelsius", type: "signed short " },
+    { name: "OilPressureKPa", type: "unsigned short " },
+    { name: "WaterTempCelsius", type: "signed short " },
+    { name: "WaterPressureKpa", type: "unsigned short " },
+    { name: "FuelPressureKpa", type: "unsigned short " },
+    { name: "FuelCapacity", type: "unsigned char " },
+    { name: "Brake", type: "unsigned char " },
+    { name: "Throttle", type: "unsigned char " },
+    { name: "Clutch", type: "unsigned char " },
+    { name: "FuelLevel", type: "float " },
+    { name: "Speed", type: "float " },
+    { name: "Rpm", type: "unsigned short " },
+    { name: "MaxRpm", type: "unsigned short " },
+    { name: "Steering", type: "signed char " },
+    { name: "GearNumGears", type: "unsigned char " },
+    { name: "BoostAmount", type: "unsigned char " },
+    { name: "CrashState", type: "unsigned char " },
+    { name: "OdometerKM", type: "float " },
+    { name: "Orientation", type: "float array 3" },
+    { name: "LocalVelocity", type: "float array 3" },
+    { name: "WorldVelocity", type: "float array 3" },
+    { name: "AngularVelocity", type: "float array 3" },
+    { name: "LocalAcceleration", type: "float array 3" },
+    { name: "WorldAcceleration", type: "float array 3" },
+    { name: "ExtentsCentre", type: "float array 3" },
+    { name: "TyreFlags", type: "unsigned char array 4" },
+    { name: "Terrain", type: "unsigned char array 4" },
+    { name: "TyreY", type: "float array 4" },
+    { name: "TyreRPS", type: "float array 4" },
+    { name: "TyreTemp", type: "unsigned char array 4" },
+    { name: "TyreHeightAboveGround", type: "float array 4" },
+    { name: "TyreWear", type: "unsigned char array 4" },
+    { name: "BrakeDamage", type: "unsigned char array 4" },
+    { name: "SuspensionDamage", type: "unsigned char array 4" },
+    { name: "BrakeTempCelsius", type: "signed short array 4" },
+    { name: "TyreTreadTemp", type: "unsigned short array 4" },
+    { name: "TyreLayerTemp", type: "unsigned short array 4" },
+    { name: "TyreCarcassTemp", type: "unsigned short array 4" },
+    { name: "TyreRimTemp", type: "unsigned short array 4" },
+    { name: "TyreInternalAirTemp", type: "unsigned short array 4" },
+    { name: "TyreTempLeft", type: "unsigned short array 4" },
+    { name: "TyreTempCenter", type: "unsigned short array 4" },
+    { name: "TyreTempRight", type: "unsigned short array 4" },
+    { name: "WheelLocalPositionY", type: "float array 4" },
+    { name: "RideHeight", type: "float array 4" },
+    { name: "SuspensionTravel", type: "float array 4" },
+    { name: "SuspensionVelocity", type: "float array 4" },
+    { name: "SuspensionRideHeight", type: "unsigned short array 4" },
+    { name: "AirPressure", type: "unsigned short array 4" },
+    { name: "EngineSpeed", type: "float " },
+    { name: "EngineTorque", type: "float " },
+    { name: "Wings", type: "unsigned char array 2" },
+    { name: "HandBrake", type: "unsigned char " },
     // Car damage
-    AeroDamage: "unsigned char ",
-    EngineDamage: "unsigned char ",
+    { name: "AeroDamage", type: "unsigned char " },
+    { name: "EngineDamage", type: "unsigned char " },
     //  HW state
-    JoyPad0: "unsigned int ",
-    DPad: "unsigned char ",
-    TyreCompound: "string 40 array 4"
-};
+    { name: "JoyPad0", type: "unsigned int " },
+    { name: "DPad", type: "unsigned char " },
+    { name: "TyreCompound", type: "string 40 array 4" }
+];
 
 export interface ITelemetryData {
     ViewedParticipantIndex: number;

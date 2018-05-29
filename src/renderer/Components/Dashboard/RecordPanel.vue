@@ -18,12 +18,9 @@
 import Vue from "vue";
 import Component from "vue-class-component";
 import { Watch } from "vue-property-decorator";
-import DashboardItem from "@/Components/DashboardItem.vue";
 import { ipcRenderer, IpcMessageEvent } from "electron";
 
-@Component({
-    components: { DashboardItem }
-})
+@Component
 export default class RecordPanel extends Vue {
 
     public isRecording = false;

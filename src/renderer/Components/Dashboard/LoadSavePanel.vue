@@ -23,7 +23,7 @@
 import Vue from "vue";
 import Component from "vue-class-component";
 import { ipcRenderer, IpcMessageEvent } from "electron";
-import loadFile from "@/Data/LoadFile";
+import { loadFile } from "@/Data/LoadFile";
 
 @Component
 export default class LoadSavePanel extends Vue {

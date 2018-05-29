@@ -1,13 +1,15 @@
 import { remote } from "electron";
+import { EventEmitter } from "events";
 import * as fs from "fs";
 import { promisify } from "util";
 const dialog = remote.dialog;
 const fileOpen = promisify(fs.open);
 const fileRead = promisify(fs.read);
 
+import DataProvider from "./DataProvider";
 import PC2DataProvider from "./PC2DataProvider";
 
-export default async function loadFile(): Promise<string|undefined> {
+export async function loadFile(): Promise<string|undefined> {
 
     const path = dialog.showOpenDialog({
         filters: [{ name: "SimTelemetry Recording", extensions: ["str"] }]
@@ -40,9 +42,18 @@ export default async function loadFile(): Promise<string|undefined> {
     const dp = new clazz(fd);
     await dp.loadFile();
 
-    // todo: make data provider globally available through vuex
-    console.log(dp.packetCount);
+    DPManagerInstance.setDp(dp);
 
     return;
 
 }
+
+class DPManager extends EventEmitter {
+    private _dp: DataProvider|undefined;
+    public get dp() { return this._dp; }
+    public setDp(value: DataProvider|undefined) {
+        this._dp = value;
+        this.emit("dpChanged");
+    }
+}
+export const DPManagerInstance = new DPManager();

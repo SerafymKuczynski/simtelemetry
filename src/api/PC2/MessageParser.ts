@@ -47,15 +47,20 @@ export interface IParsedMessage {
     messageObject: any;
 }
 
+export interface ITypeDefinition {
+    name: string;
+    type: string;
+}
+
 export function parseMessage(
-    buffer: Buffer, typeDefinitions: { [name: string]: string }, initialPosition = 0): IParsedMessage {
+    buffer: Buffer, typeDefinitions: ITypeDefinition[], initialPosition = 0): IParsedMessage {
 
     let position = initialPosition;
     const retobj: { [name: string]: any } = {};
 
-    for (const key of Object.keys(typeDefinitions)) {
+    for (const td of typeDefinitions) {
 
-        const typeDef = typeDefinitions[key].trim();
+        const typeDef = td.type.trim();
         let value: any;
 
         if (typeDef.match(/array/)) {
@@ -78,7 +83,7 @@ export function parseMessage(
             value = tmp.value;
         }
 
-        retobj[key] = value;
+        retobj[td.name] = value;
 
     }
 

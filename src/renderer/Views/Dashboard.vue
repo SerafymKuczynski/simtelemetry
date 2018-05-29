@@ -18,9 +18,9 @@
 <script lang="ts">
 import Vue from "vue";
 import Component from "vue-class-component";
-import RecordPanel from "@/Components/RecordPanel.vue";
-import LoadSavePanel from "@/Components/LoadSavePanel.vue";
-import DashboardItem from "@/Components/DashboardItem.vue";
+import RecordPanel from "@/Components/Dashboard/RecordPanel.vue";
+import LoadSavePanel from "@/Components/Dashboard/LoadSavePanel.vue";
+import DashboardItem from "@/Components/Dashboard/DashboardItem.vue";
 
 @Component({
     components: { RecordPanel, LoadSavePanel, DashboardItem }

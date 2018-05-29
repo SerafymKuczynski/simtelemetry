@@ -7,7 +7,7 @@ interface IPC2DataPacket {
     type: number;
 }
 
-export default class PC2DataInstance extends DataProvider {
+export default class PC2DataProvider extends DataProvider {
 
     public readonly game = "PC2";
 
@@ -42,9 +42,7 @@ export default class PC2DataInstance extends DataProvider {
         position += 4;
 
         const packetHeaderBuffer = Buffer.alloc(Api.PacketHeaderSize);
-        console.log(`Packet Count: ${packetCount}`);
         for (let i = 0; i < packetCount; i++) {
-            console.log("Position", position);
             await this.readFromFile(packetHeaderBuffer, Api.PacketHeaderSize, position);
             position += Api.PacketHeaderSize;
             const packetHeader = parseMessage(packetHeaderBuffer, Api.PacketBaseTypes);
@@ -62,7 +60,8 @@ export default class PC2DataInstance extends DataProvider {
         const size = Api.PacketTypeInformations[pt].size - Api.PacketHeaderSize;
         const buff = Buffer.alloc(size);
         await this.readFromFile(buff, size, position);
-        parseMessage(buff, Api.PacketTypeInformations[pt].td!);
+        const parsedMessage = parseMessage(buff, Api.PacketTypeInformations[pt].td!);
+        return parsedMessage.messageObject;
     }
 
 }

@@ -44,12 +44,15 @@ export default class App extends Vue {
 
     public readonly name = "SimTelemetry";
     public readonly navItems = [
-        { name: "Dashboard", icon: "dashboard" },
-        { name: "Settings", icon: "settings" }
+        { name: "Dashboard", icon: "dashboard", route: "dashboard" },
+        { name: "Settings", icon: "settings" },
+        { name: "Raw Graph", icon: "show_chart", route: "rawgraph" }
     ];
 
-    public navigate() {
-
+    public navigate(target: string) {
+        if (target) {
+            this.$router.push({ name: target });
+        }
     }
 
     public openGithub() {

@@ -1,5 +1,4 @@
 import { createSocket, RemoteInfo, Socket } from "dgram";
-import * as fs from "fs";
 
 import * as Api from "../../api/PC2/Definitions";
 import { parseMessage } from "../../api/PC2/MessageParser";
@@ -33,16 +32,16 @@ export default class PC2SimClient extends SimClient {
         this.emit("stop");
     }
 
-    protected writeData(ws: fs.WriteStream) {
+    protected async writeData(fd: number): Promise<void> {
 
         // write PC2 specific header
-        const b = Buffer.alloc(16);
+        const b = Buffer.alloc(4);
         b.writeUInt32LE(this.dataPoints.length, 0);
-        ws.write(b);
+        await this.writeToFile(fd, b);
 
         // write data packets
         for (const dbuff of this.dataPoints) {
-            ws.write(dbuff);
+            await this.writeToFile(fd, dbuff);
         }
 
     }

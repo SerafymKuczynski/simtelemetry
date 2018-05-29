@@ -1,5 +1,9 @@
 import { EventEmitter } from "events";
 import * as fs from "fs";
+import { promisify } from "util";
+const writeFile = promisify(fs.write);
+const openFile = promisify(fs.open);
+const closeFile = promisify(fs.close);
 
 export interface ISimClientStatusUpdate {
     status: string;
@@ -32,7 +36,7 @@ export default abstract class SimClient extends EventEmitter implements ISimClie
     public abstract stop(): void;
 
     public async saveToFile(path: string): Promise<void> {
-        const ws = fs.createWriteStream(path);
+        const fd = await openFile(path, "w");
 
         // write header
         const header = Buffer.alloc(16);
@@ -40,14 +44,18 @@ export default abstract class SimClient extends EventEmitter implements ISimClie
         header.writeUInt8(1, 3);
         header.write(this.game, 4, 4, "utf-8");
         header.writeUIntLE(Date.now(), 8, 8);
-        ws.write(header);
+        this.writeToFile(fd, header);
 
         // write data
-        this.writeData(ws);
+        await this.writeData(fd);
 
-        ws.end();
+        await closeFile(fd);
     }
 
-    protected abstract writeData(ws: fs.WriteStream): void;
+    protected async writeToFile(fd: number, data: Buffer) {
+        return writeFile(fd, data);
+    }
+
+    protected abstract async writeData(fd: number): Promise<void>;
 
 }
