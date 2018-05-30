@@ -104,7 +104,11 @@ export const TelemetryDataTypes = [
     //  HW state
     { name: "JoyPad0", type: "unsigned int " },
     { name: "DPad", type: "unsigned char " },
-    { name: "TyreCompound", type: "string 40 array 4" }
+    { name: "TyreCompound", type: "string 40 array 4" },
+    { name: "TurboBoostPressure", type: "float" },
+    { name: "FullPosition", type: "float array 3" },
+    { name: "BrakeBias", type: "unsigned char" },
+    { name: "TickCount", type: "unsigned int" }
 ];
 
 export interface ITelemetryData {
@@ -172,15 +176,19 @@ export interface ITelemetryData {
     JoyPad0: number;
     DPad: number;
     TyreCompound: string[];
+    TurboBoostPressure: number;
+    FullPosition: number[];
+    BrakeBias: number;
+    TickCount: number;
 }
 
 export const PacketHeaderSize = 12;
 export const PacketTypeInformations = [
-    { size: 538,    td: TelemetryDataTypes },
+    { size: 559,    td: TelemetryDataTypes },
     { size: 308,    td: undefined },
-    { size: 1040,   td: undefined },
-    { size: 993,    td: undefined },
+    { size: 1136,   td: undefined },
+    { size: 1063,    td: undefined },
     { size: 24,     td: undefined },
-    { size: 784,    td: undefined },
+    { size: 1024,    td: undefined },
     { size: 0,      td: undefined }
 ];
