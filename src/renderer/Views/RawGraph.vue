@@ -1,6 +1,6 @@
 <template>
     <div>
-        <svg>
+        <svg viewBox="0 0 300 150" perserveAspectRatio="xMinYMid">
             <g-line v-for="series in rawData" :key="series.id" :data="series.data"></g-line>
         </svg>
         <v-navigation-drawer app clipped right permanent>
