@@ -1,7 +1,8 @@
 import { createSocket, RemoteInfo, Socket } from "dgram";
 
-import * as Api from "../../api/PC2/Definitions";
+import * as Interfaces from "../../api/PC2/Interfaces";
 import { parseMessage } from "../../api/PC2/MessageParser";
+import * as Packets from "../../api/PC2/Packets";
 import SimClient from "./SimClient";
 
 export default class PC2SimClient extends SimClient {
@@ -50,18 +51,18 @@ export default class PC2SimClient extends SimClient {
         if (!this.isRunning) { return; }
 
         // get message header
-        const hpm = parseMessage(msg, Api.PacketBaseTypes);
-        const header = hpm.messageObject as Api.IPacketBase;
+        const hpm = parseMessage(msg, Packets.BaseTypes);
+        const header = hpm.messageObject as Interfaces.IPacketBase;
 
         if (header.PartialPacketNumber > 1) {
             console.log("not supporting partial packets yet.");
             return;
         }
 
-        if (header.PacketType === Api.PacketTypes.CarPhysics) {
+        if (header.PacketType === Packets.Categories.CarPhysics) {
             this.messageCounter++;
             this.emit("status", `Received ${this.messageCounter} packets.`);
-            const size = Api.PacketTypeInformations[header.PacketType].size;
+            const size = Packets.TypeInformations[header.PacketType].size;
             const b = Buffer.allocUnsafe(size);
             msg.copy(b, 0, 0, size);
             this.dataPoints.push(b);

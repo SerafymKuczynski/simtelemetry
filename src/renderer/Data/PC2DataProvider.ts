@@ -1,5 +1,6 @@
-import * as Api from "../../api/PC2/Definitions";
+import * as Interfaces from "../../api/PC2/Interfaces";
 import { parseMessage } from "../../api/PC2/MessageParser";
+import * as Packets from "../../api/PC2/Packets";
 import DataProvider from "./DataProvider";
 
 interface IPC2DataPacket {
@@ -18,7 +19,7 @@ export default class PC2DataProvider extends DataProvider {
     }
 
     get telemetryDataPacketCount() {
-        return this.fileIndex.filter((x) => x.type === Api.PacketTypes.CarPhysics).length;
+        return this.fileIndex.filter((x) => x.type === Packets.Categories.CarPhysics).length;
     }
 
     public getPacket(index: number): Promise<any> {
@@ -26,8 +27,8 @@ export default class PC2DataProvider extends DataProvider {
         return this.getPacketInternal(fi.position, fi.type);
     }
 
-    public getTelemetryDataPacket(index: number): Promise<Api.ITelemetryData> {
-        const fi = this.fileIndex.filter((x) => x.type === Api.PacketTypes.CarPhysics)[index];
+    public getTelemetryDataPacket(index: number): Promise<Interfaces.ITelemetryData> {
+        const fi = this.fileIndex.filter((x) => x.type === Packets.Categories.CarPhysics)[index];
         return this.getPacketInternal(fi.position, fi.type);
     }
 
@@ -41,26 +42,26 @@ export default class PC2DataProvider extends DataProvider {
         const packetCount = packetCountBuffer.readUInt32LE(0);
         position += 4;
 
-        const packetHeaderBuffer = Buffer.alloc(Api.PacketHeaderSize);
+        const packetHeaderBuffer = Buffer.alloc(Packets.HeaderSize);
         for (let i = 0; i < packetCount; i++) {
-            await this.readFromFile(packetHeaderBuffer, Api.PacketHeaderSize, position);
-            position += Api.PacketHeaderSize;
-            const packetHeader = parseMessage(packetHeaderBuffer, Api.PacketBaseTypes);
-            const ptype = (packetHeader.messageObject as Api.IPacketBase).PacketType;
-            if (ptype < 0 || ptype >= Api.PacketTypeInformations.length) {
+            await this.readFromFile(packetHeaderBuffer, Packets.HeaderSize, position);
+            position += Packets.HeaderSize;
+            const packetHeader = parseMessage(packetHeaderBuffer, Packets.BaseTypes);
+            const ptype = (packetHeader.messageObject as Interfaces.IPacketBase).PacketType;
+            if (ptype < 0 || ptype >= Packets.TypeInformations.length) {
                 throw Error(`Invalid packet type: ${ptype} (Index: ${i})`);
             }
             this.fileIndex.push({ position, type: ptype });
-            position += Api.PacketTypeInformations[ptype].size - Api.PacketHeaderSize;
+            position += Packets.TypeInformations[ptype].size - Packets.HeaderSize;
         }
 
     }
 
     private async getPacketInternal(position: number, pt: number): Promise<any> {
-        const size = Api.PacketTypeInformations[pt].size - Api.PacketHeaderSize;
+        const size = Packets.TypeInformations[pt].size - Packets.HeaderSize;
         const buff = Buffer.alloc(size);
         await this.readFromFile(buff, size, position);
-        const parsedMessage = parseMessage(buff, Api.PacketTypeInformations[pt].td!);
+        const parsedMessage = parseMessage(buff, Packets.TypeInformations[pt].td!);
         return parsedMessage.messageObject;
     }
 

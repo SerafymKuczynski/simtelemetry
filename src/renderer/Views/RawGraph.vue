@@ -1,8 +1,6 @@
 <template>
-    <div>
-        <svg viewBox="0 0 300 150" perserveAspectRatio="xMinYMid">
-            <g-line v-for="series in rawData" :key="series.id" :data="series.data"></g-line>
-        </svg>
+    <div class="fill-height" style="width: 100%;">
+        <graph :data="rawData"></graph>
         <v-navigation-drawer app clipped right permanent>
             <v-list>
                 <template v-for="(series, index) in dataSeries">
@@ -52,6 +50,8 @@ import GLine from "@/Components/RawGraph/Line.vue";
 import { DPManagerInstance } from "../Data/LoadFile";
 import DataProvider from "../Data/DataProvider";
 import PC2DataProvider from "../Data/PC2DataProvider";
+import { IRawDataSeries, IDataPoint } from "../Components/RawGraph/interfaces";
+import Graph from "@/Components/RawGraph/Graph.vue";
 
 interface IDataSeries {
     id: number;
@@ -63,13 +63,8 @@ interface IDataSeries {
     f?: (d: number|number[]) => number;
 }
 
-interface IRawDataSeries {
-    id: number;
-    data: number[];
-}
-
 @Component({
-    components: { "g-line": GLine }
+    components: { "g-line": GLine, "graph": Graph }
 })
 export default class RawGraph extends Vue {
 
@@ -86,6 +81,8 @@ export default class RawGraph extends Vue {
 
     private async addSeries(seriesId: number): Promise<void> {
 
+        console.log("Add series");
+
         const tempDp = DPManagerInstance.dp as DataProvider | undefined;
         if (!tempDp || tempDp.game !== "PC2") {
             return;
@@ -98,24 +95,29 @@ export default class RawGraph extends Vue {
         }
 
         const ps = this.dataSeries.find((x) => x.id === parentSeries)!;
-        let f: (d: number|number[]) => number;
+        let transformationFunction: (d: number|number[]) => number;
         if (seriesId !== parentSeries) {
-            f = ps.subSeries!.find((x) => x.id === seriesId)!.f!;
+            transformationFunction = ps.subSeries!.find((x) => x.id === seriesId)!.f!;
         } else {
-            f = (d: number|number[]) => d as number;
+            transformationFunction = (d: number|number[]) => d as number;
         }
         
         const pcount = dp.telemetryDataPacketCount;
-        const data = [];
+        const data: IDataPoint[] = [];
         for (let i = 0; i < pcount; i++) {
             const packet = (await dp.getTelemetryDataPacket(i) as any) as { [p: string]: number|number[] };
-            data.push(f(packet[ps.property!]));
+            data.push({
+                tick: i,
+                value: transformationFunction(packet[ps.property!])
+            });
         }
 
         this.rawData.push({
             id: seriesId,
             data
         });
+
+        console.log("RawData", this.rawData.length);
         
     }
 

@@ -23,7 +23,7 @@
         </v-toolbar>
 
         <v-content>
-            <v-container>
+            <v-container fill-height>
                 <router-view></router-view>
             </v-container>
         </v-content>

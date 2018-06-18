@@ -5,7 +5,17 @@
 // (\w)+: "((\w| )+)"(,?)
 // { name: "$1", type: "$2" }$4
 
-export const PacketTypes = {
+export interface IPacketInformation {
+    size: number;
+    td?: IType[];
+}
+
+export interface IType {
+    name: string;
+    type: string;
+}
+
+export const Categories = {
     CarPhysics: 0,
     RaceDefinition: 1,
     Participants: 2,
@@ -17,7 +27,7 @@ export const PacketTypes = {
     ParticipantVehicleNames: 8
 };
 
-export const PacketBaseTypes = [
+export const BaseTypes: IType[] = [
     { name: "PacketNumber", type: "unsigned int " },
     { name: "CategoryPacketNumber", type: "unsigned int " },
     { name: "PartialPacketIndex", type: "unsigned char " },
@@ -26,16 +36,7 @@ export const PacketBaseTypes = [
     { name: "PacketVersion", type: "unsigned char " }
 ];
 
-export interface IPacketBase {
-    PacketNumber: number;
-    CategoryPacketNumber: number;
-    PartialPacketIndex: number;
-    PartialPacketNumber: number;
-    PacketType: number;
-    PacketVersion: number;
-}
-
-export const TelemetryDataTypes = [
+export const TelemetryDataTypes: IType[] = [
     // Participant info
     { name: "ViewedParticipantIndex", type: "signed char " },
     // Unfiltered input
@@ -111,84 +112,13 @@ export const TelemetryDataTypes = [
     { name: "TickCount", type: "unsigned int" }
 ];
 
-export interface ITelemetryData {
-    ViewedParticipantIndex: number;
-    UnfilteredThrottle: number;
-    UnfilteredBrake: number;
-    UnfilteredSteering: number;
-    UnfilteredClutch: number;
-    CarFlags: number;
-    OilTempCelsius: number;
-    OilPressureKPa: number;
-    WaterTempCelsius: number;
-    WaterPressureKpa: number;
-    FuelPressureKpa: number;
-    FuelCapacity: number;
-    Brake: number;
-    Throttle: number;
-    Clutch: number;
-    FuelLevel: number;
-    Speed: number;
-    Rpm: number;
-    MaxRpm: number;
-    Steering: number;
-    GearNumGears: number;
-    BoostAmount: number;
-    CrashState: number;
-    OdometerKM: number;
-    Orientation: number[];
-    LocalVelocity: number[];
-    WorldVelocity: number[];
-    AngularVelocity: number[];
-    LocalAcceleration: number[];
-    WorldAcceleration: number[];
-    ExtentsCentre: number[];
-    TyreFlags: number[];
-    Terrain: number[];
-    TyreY: number[];
-    TyreRPS: number[];
-    TyreTemp: number[];
-    TyreHeightAboveGround: number[];
-    TyreWear: number[];
-    BrakeDamage: number[];
-    SuspensionDamage: number[];
-    BrakeTempCelsius: number[];
-    TyreTreadTemp: number[];
-    TyreLayerTemp: number[];
-    TyreCarcassTemp: number[];
-    TyreRimTemp: number[];
-    TyreInternalAirTemp: number[];
-    TyreTempLeft: number[];
-    TyreTempCenter: number[];
-    TyreTempRight: number[];
-    WheelLocalPositionY: number[];
-    RideHeight: number[];
-    SuspensionTravel: number[];
-    SuspensionVelocity: number[];
-    SuspensionRideHeight: number[];
-    AirPressure: number[];
-    EngineSpeed: number;
-    EngineTorque: number;
-    Wings: number[];
-    HandBrake: number;
-    AeroDamage: number;
-    EngineDamage: number;
-    JoyPad0: number;
-    DPad: number;
-    TyreCompound: string[];
-    TurboBoostPressure: number;
-    FullPosition: number[];
-    BrakeBias: number;
-    TickCount: number;
-}
-
-export const PacketHeaderSize = 12;
-export const PacketTypeInformations = [
+export const HeaderSize = 12;
+export const TypeInformations: IPacketInformation[] = [
     { size: 559,    td: TelemetryDataTypes },
     { size: 308,    td: undefined },
     { size: 1136,   td: undefined },
-    { size: 1063,    td: undefined },
+    { size: 1063,   td: undefined },
     { size: 24,     td: undefined },
-    { size: 1024,    td: undefined },
+    { size: 1024,   td: undefined },
     { size: 0,      td: undefined }
 ];

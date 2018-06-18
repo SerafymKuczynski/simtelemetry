@@ -33,6 +33,8 @@ function getValue(typeDef: string, buffer: Buffer, position: number): { newPosit
             buffer.toString("utf-8", position, position + length).replace(/\0/g, "");
             position += length;
         }
+    } else {
+        console.log("Unsupported type:", typeDef);
     }
 
     return {
