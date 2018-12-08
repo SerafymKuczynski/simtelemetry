@@ -1,10 +1,10 @@
 <template>
     <v-layout>
         <v-flex xs6>
-            <v-btn @click="load">Load Recording</v-btn>
+            <v-btn block @click="load">Load Recording</v-btn>
         </v-flex>
         <v-flex xs6>
-            <v-btn @click="save">Save Recording</v-btn>
+            <v-btn block @click="save">Save Recording</v-btn>
         </v-flex>
         <v-dialog v-model="errorDialog" max-width="500">
             <v-card>

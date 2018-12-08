@@ -13,6 +13,7 @@ export interface IPacketInformation {
 export interface IType {
     name: string;
     type: string;
+    structType?: IType[];
 }
 
 export const Categories = {
@@ -112,12 +113,40 @@ export const TelemetryDataTypes: IType[] = [
     { name: "TickCount", type: "unsigned int" }
 ];
 
+export const ParticipantInfoDataTypes: IType[] = [
+    { name: "WorldPosition", type: "signed short array 3" },
+    { name: "Orientation", type: "signed short array 3" },
+    { name: "CurrentLapDistance", type: "unsigned short" },
+    { name: "RacePosition", type: "unsigned char" },
+    { name: "Sector", type: "unsigned char" },
+    { name: "HighestFlag", type: "unsigned char" },
+    { name: "PitModeSchedule", type: "unsigned char" },
+    { name: "CarIndex", type: "unsigned short" },
+    { name: "RaceState", type: "unsigned char" },
+    { name: "CurrentLap", type: "unsigned char" },
+    { name: "CurrentTime", type: "float" },
+    { name: "CurrentSectorTime", type: "float" },
+    { name: "MPParticipantIndex", type: "unsigned short" },
+];
+
+export const TimingsDataDataTypes: IType[] = [
+    { name: "NumParticipants", type: "signed char" },
+    { name: "ParticipantsChangedTimestamp", type: "unsigned int" },
+    { name: "EventTimeRemaining", type: "float" },
+    { name: "SplitTimeAhead", type: "float" },
+    { name: "SplitTimeBehind", type: "float" },
+    { name: "SplitTime", type: "float" },
+    { name: "Participants", type: "struct array 32", structType: ParticipantInfoDataTypes },
+    { name: "LocalParticipantIndex", type: "unsigned short" },
+    { name: "TickCount", type: "unsigned int" }
+];
+
 export const HeaderSize = 12;
 export const TypeInformations: IPacketInformation[] = [
     { size: 559,    td: TelemetryDataTypes },
     { size: 308,    td: undefined },
     { size: 1136,   td: undefined },
-    { size: 1063,   td: undefined },
+    { size: 1063,   td: TimingsDataDataTypes },
     { size: 24,     td: undefined },
     { size: 1024,   td: undefined },
     { size: 0,      td: undefined }

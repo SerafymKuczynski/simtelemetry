@@ -1,7 +1,7 @@
 <template>
     <v-app dark>
 
-        <v-navigation-drawer clipped fixed stateless value="true" app>
+        <v-navigation-drawer clipped fixed stateless :value="true" app>
             <v-list dense>
                 <v-list-tile
                     v-for="item in navItems"
@@ -23,7 +23,7 @@
         </v-toolbar>
 
         <v-content>
-            <v-container fill-height>
+            <v-container fill-height style="align-items:start;">
                 <router-view></router-view>
             </v-container>
         </v-content>
@@ -56,7 +56,7 @@ export default class App extends Vue {
     }
 
     public openGithub() {
-
+        
     }
 
 };

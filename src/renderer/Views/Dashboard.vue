@@ -1,12 +1,12 @@
 <template>
-    <v-container grid-list-md>
+    <v-container fluid grid-list-lg justify-start>
         <v-layout row wrap>
-            <v-flex xs12 md6 lg4>
+            <v-flex>
                 <dashboard-item title="Record">
                     <record-panel></record-panel>
                 </dashboard-item>
             </v-flex>
-            <v-flex xs12 md6 lg4>
+            <v-flex>
                 <dashboard-item title="Load / Save">
                     <load-save-panel></load-save-panel>
                 </dashboard-item>

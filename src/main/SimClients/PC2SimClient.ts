@@ -25,6 +25,7 @@ export default class PC2SimClient extends SimClient {
     public start(): void {
         this._isRunning = true;
         this.udp.bind(this.SMS_UDP_PORT);
+        this.emit("status", "Waiting for connection...");
     }
 
     public stop(): void {

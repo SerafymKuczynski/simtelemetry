@@ -5,12 +5,12 @@
             placeholder="Choose..."
             :items="clients"
         />
-        <v-btn @click="toggleRecording">
+        <v-btn block @click="toggleRecording">
             <span v-if="isRecording" class="recordDot mr-2">&#x2B24;</span>
             {{ isRecording ? "Stop" : "Start" }} Recording
         </v-btn>
         <div color="text--error" v-if="errorText">{{ errorText }}</div>
-        <div v-if="statusText">{{ statusText }}</div>
+        <div class="mt-3" v-if="statusText">{{ statusText }}</div>
     </div>
 </template>
 
