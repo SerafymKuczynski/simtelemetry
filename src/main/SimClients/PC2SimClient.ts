@@ -9,6 +9,11 @@ export default class PC2SimClient extends SimClient {
 
     public readonly game = "PC2";
 
+    public state = {
+        meta: {},
+        values: {}
+    };
+
     private readonly SMS_UDP_PORT = 5606;
     // private readonly SMS_UDP_MAX_PACKETSIZE = 1500;
     private readonly udp: Socket = createSocket("udp4");

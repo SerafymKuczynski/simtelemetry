@@ -20,6 +20,11 @@ export default abstract class SimClient extends EventEmitter implements ISimClie
 
     public abstract readonly game: string;
 
+    public abstract state: {
+        meta: Record<string, any>;
+        values: Record<string, any>;
+    };
+
     protected _isRunning = false;
     public get isRunning() {
         return this._isRunning;

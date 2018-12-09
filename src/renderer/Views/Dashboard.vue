@@ -1,5 +1,5 @@
 <template>
-    <v-container fluid grid-list-lg justify-start>
+    <v-container fluid grid-list-lg class="ma-0">
         <v-layout row wrap>
             <v-flex>
                 <dashboard-item title="Record">
@@ -26,7 +26,7 @@ import DashboardItem from "@/Components/Dashboard/DashboardItem.vue";
     components: { RecordPanel, LoadSavePanel, DashboardItem }
 })
 export default class Dashboard extends Vue {
-    public name = "dashboard"
+    public name = "dashboard";
 }
 </script>
 
