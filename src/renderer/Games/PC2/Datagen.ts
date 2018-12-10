@@ -30,7 +30,7 @@ function writeValue(typeDef: string, buffer: Buffer, position: number): number {
         if (!result) {
             throw new Error("Invalid type descriptor: String missing length in " + typeDef);
         } else {
-            const length = Number.parseInt(result[1]);
+            const length = Number.parseInt(result[1], 10);
             buffer.write("RandomString", position, length);
             return position + length;
         }
@@ -56,7 +56,7 @@ function createPacket(packetCategory: number): Buffer {
             if (!result) {
                 throw new Error("Invalid type definition: missing length of array in " + t);
             } else {
-                const length = Number.parseInt(result[1]);
+                const length = Number.parseInt(result[1], 10);
                 for (let i = 0; i < length; i++) {
                     position = writeValue(t.type, b, position);
                 }
@@ -84,3 +84,5 @@ for (let i = 0; i < PACKET_COUNT; i++) {
     const b = createPacket(0);
     fs.writeSync(fd, b);
 }
+
+fs.closeSync(fd);

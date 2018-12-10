@@ -77,3 +77,31 @@ export interface ITelemetryData {
     BrakeBias: number;
     TickCount: number;
 }
+
+export interface IParticipantInfo {
+    WorldPosition: number[];
+    Orientation: number[];
+    CurrentLapDistance: number;
+    RacePosition: number;
+    Sector: number;
+    HighestFlag: number;
+    PitModeSchedule: number;
+    CarIndex: number;
+    RaceState: number;
+    CurrentLap: number;
+    CurrentTime: number;
+    CurrentSectorTime: number;
+    MPParticipantIndex: number;
+}
+
+export interface ITimingsData {
+    NumParticipants: number;
+    ParticipantsChangedTimestamp: number;
+    EventTimeRemaining: number;
+    SplitTimeAhead: number;
+    SplitTimeBehind: number;
+    SplitTime: number;
+    Participants: IParticipantInfo[];
+    LocalParticipantIndex: number;
+    TickCount: number;
+}

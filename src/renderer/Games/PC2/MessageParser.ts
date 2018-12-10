@@ -1,5 +1,8 @@
-function getValue(typeDef: string, buffer: Buffer, position: number): { newPosition: number, value: any } {
+import { IType } from "./Packets";
 
+function getValue(td: IType, buffer: Buffer, position: number): { newPosition: number, value: any } {
+
+    const typeDef = td.type.trim();
     let value: any;
 
     if (typeDef.match(/unsigned int/)) {
@@ -29,10 +32,14 @@ function getValue(typeDef: string, buffer: Buffer, position: number): { newPosit
         if (!result) {
             throw new Error("Invalid type descriptor: String missing length in " + typeDef);
         } else {
-            const length = Number.parseInt(result[1]);
+            const length = Number.parseInt(result[1], 10);
             buffer.toString("utf-8", position, position + length).replace(/\0/g, "");
             position += length;
         }
+    } else if (typeDef.match(/struct/)) {
+        const msg = parseMessage(buffer, td.structType!, position);
+        position = msg.positionInBuffer;
+        value = msg.messageObject;
     } else {
         console.log("Unsupported type:", typeDef);
     }
@@ -49,13 +56,8 @@ export interface IParsedMessage {
     messageObject: any;
 }
 
-export interface ITypeDefinition {
-    name: string;
-    type: string;
-}
-
-export function parseMessage(
-    buffer: Buffer, typeDefinitions: ITypeDefinition[], initialPosition = 0): IParsedMessage {
+export default function parseMessage(
+    buffer: Buffer, typeDefinitions: IType[], initialPosition = 0): IParsedMessage {
 
     let position = initialPosition;
     const retobj: { [name: string]: any } = {};
@@ -70,17 +72,17 @@ export function parseMessage(
             if (!result) {
                 throw new Error("Invalid type definition: missing length of array in " + typeDef);
             } else {
-                const length = Number.parseInt(result[1]);
+                const length = Number.parseInt(result[1], 10);
                 const arr = [];
                 for (let i = 0; i < length; i++) {
-                    const tmp = getValue(typeDef, buffer, position);
+                    const tmp = getValue(td, buffer, position);
                     position = tmp.newPosition;
                     arr.push(tmp.value);
                 }
                 value = arr;
             }
         } else {
-            const tmp = getValue(typeDef, buffer, position);
+            const tmp = getValue(td, buffer, position);
             position = tmp.newPosition;
             value = tmp.value;
         }

@@ -1,8 +1,8 @@
 import { createSocket, RemoteInfo, Socket } from "dgram";
 
-import * as Interfaces from "../../api/PC2/Interfaces";
-import { parseMessage } from "../../api/PC2/MessageParser";
-import * as Packets from "../../api/PC2/Packets";
+import * as Interfaces from "../Games/PC2/Interfaces";
+import parseMessage from "../Games/PC2/MessageParser";
+import * as Packets from "../Games/PC2/Packets";
 import SimClient from "./SimClient";
 
 export default class PC2SimClient extends SimClient {
@@ -13,6 +13,13 @@ export default class PC2SimClient extends SimClient {
         meta: {},
         values: {}
     };
+
+    public get fields() {
+        return {
+            meta: [],
+            values: Packets.TelemetryDataTypes.concat(Packets.TimingsDataDataTypes)
+        };
+    }
 
     private readonly SMS_UDP_PORT = 5606;
     // private readonly SMS_UDP_MAX_PACKETSIZE = 1500;
@@ -37,20 +44,6 @@ export default class PC2SimClient extends SimClient {
         this._isRunning = false;
         this.udp.close();
         this.emit("stop");
-    }
-
-    protected async writeData(fd: number): Promise<void> {
-
-        // write PC2 specific header
-        const b = Buffer.alloc(4);
-        b.writeUInt32LE(this.dataPoints.length, 0);
-        await this.writeToFile(fd, b);
-
-        // write data packets
-        for (const dbuff of this.dataPoints) {
-            await this.writeToFile(fd, dbuff);
-        }
-
     }
 
     private parseMessage(msg: Buffer, rinfo: RemoteInfo): void {

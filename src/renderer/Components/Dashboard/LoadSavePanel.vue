@@ -22,8 +22,6 @@
 <script lang="ts">
 import Vue from "vue";
 import Component from "vue-class-component";
-import { ipcRenderer, IpcMessageEvent } from "electron";
-import { loadFile } from "@/Data/LoadFile";
 
 @Component
 export default class LoadSavePanel extends Vue {
@@ -32,18 +30,11 @@ export default class LoadSavePanel extends Vue {
     public errorText = "";
     
     public async load() {
-        const err = await loadFile();
-        if (err) { console.log(err); }
+        // TODO
     }
 
     public save() {
-        ipcRenderer.once("saveRecordingResult", (ev: IpcMessageEvent, result: string | undefined) => {
-            if (result) { 
-                this.errorText = result;
-                this.errorDialog = true;
-            }
-        });
-        ipcRenderer.send("saveRecording");
+        // TODO
     }
 
 }
