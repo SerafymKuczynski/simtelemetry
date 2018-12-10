@@ -1,9 +1,11 @@
 import { createSocket, RemoteInfo, Socket } from "dgram";
 
-import * as Interfaces from "../Games/PC2/Interfaces";
-import parseMessage from "../Games/PC2/MessageParser";
-import * as Packets from "../Games/PC2/Packets";
-import SimClient from "./SimClient";
+import * as Interfaces from "./Interfaces";
+import parseMessage from "./MessageParser";
+import * as Packets from "./Packets";
+import SimClient from "../../SimClients/SimClient";
+
+const valuePackets = [ 0, 3 ];
 
 export default class PC2SimClient extends SimClient {
 
@@ -22,11 +24,12 @@ export default class PC2SimClient extends SimClient {
     }
 
     private readonly SMS_UDP_PORT = 5606;
+    private readonly TIMEOUT = 100;
     // private readonly SMS_UDP_MAX_PACKETSIZE = 1500;
     private readonly udp: Socket = createSocket("udp4");
 
     private messageCounter = 0;
-    private dataPoints: Buffer[] = [];
+    private timeoutInstance?: any;
 
     constructor() {
         super();
@@ -35,15 +38,14 @@ export default class PC2SimClient extends SimClient {
     }
 
     public start(): void {
-        this._isRunning = true;
+        this.isRunning = true;
         this.udp.bind(this.SMS_UDP_PORT);
-        this.emit("status", "Waiting for connection...");
+        this.status = "Waiting for connection...";
     }
 
     public stop(): void {
-        this._isRunning = false;
+        this.isRunning = false;
         this.udp.close();
-        this.emit("stop");
     }
 
     private parseMessage(msg: Buffer, rinfo: RemoteInfo): void {
@@ -58,13 +60,22 @@ export default class PC2SimClient extends SimClient {
             return;
         }
 
-        if (header.PacketType === Packets.Categories.CarPhysics) {
-            this.messageCounter++;
-            this.emit("status", `Received ${this.messageCounter} packets.`);
-            const size = Packets.TypeInformations[header.PacketType].size;
-            const b = Buffer.allocUnsafe(size);
-            msg.copy(b, 0, 0, size);
-            this.dataPoints.push(b);
+        this.status = `Received ${++this.messageCounter} packets.`;
+
+        this.gameIsActive = true;
+        if (this.timeoutInstance) {
+            clearTimeout(this.timeoutInstance);
+        }
+        this.timeoutInstance = setTimeout(() => {
+            this.gameIsActive = false;
+        }, this.TIMEOUT);
+
+        const td = Packets.TypeInformations[header.PacketType].td;
+        if (td) {
+            const value = parseMessage(msg, td, Packets.HeaderSize).messageObject;
+            if (valuePackets.includes(header.PacketType)) {
+                Object.assign(this.state.values, value);
+            }
         }
 
     }

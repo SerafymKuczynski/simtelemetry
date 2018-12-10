@@ -75,7 +75,7 @@ export interface ITelemetryData {
     TurboBoostPressure: number;
     FullPosition: number[];
     BrakeBias: number;
-    TickCount: number;
+    TelemetryTickCount: number;
 }
 
 export interface IParticipantInfo {
@@ -103,5 +103,28 @@ export interface ITimingsData {
     SplitTime: number;
     Participants: IParticipantInfo[];
     LocalParticipantIndex: number;
-    TickCount: number;
+    TimingsTickCount: number;
+}
+
+export interface IGameState {
+    BuildVersionNumber: number;
+    GameState: number;
+    AmbientTemperature: number;
+    TrackTemperature: number;
+    RainDensity: number;
+    SnowDensity: number;
+    WindSpeed: number;
+    WindDirectionX: number;
+    WindDirectionY: number;
+}
+
+export enum GameState {
+    GAME_EXITED = 0,
+    GAME_FRONT_END,
+    GAME_INGAME_PLAYING,
+    GAME_INGAME_PAUSED,
+    GAME_INGAME_INMENU_TIME_TICKING,
+    GAME_INGAME_RESTARTING,
+    GAME_INGAME_REPLAY,
+    GAME_FRONT_END_REPLAY,
 }

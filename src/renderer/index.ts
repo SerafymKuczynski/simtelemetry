@@ -5,7 +5,7 @@ import Vuetify from "vuetify";
 import "../../node_modules/vuetify/dist/vuetify.min.css";
 Vue.use(Vuetify);
 
-// Vuetify needs Material icons, so inject a script tag into site
+// Vuetify needs Material icons, so inject a style tag into site
 const head = document.head || document.getElementsByTagName("head")[0];
 const node = document.createElement("link");
 node.setAttribute("rel", "stylesheet");
@@ -14,9 +14,11 @@ head.appendChild(node);
 
 import App from "./App.vue";
 import router from "./router";
+import store from "./Store/store";
 
 new Vue({
     components: { App },
     router,
+    store,
     template: "<App/>"
 }).$mount("#app");

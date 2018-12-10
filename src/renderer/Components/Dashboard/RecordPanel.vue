@@ -6,51 +6,51 @@
             :items="clients"
         />
         <v-btn block @click="toggleRecording">
-            <span v-if="isRecording" class="recordDot mr-2">&#x2B24;</span>
-            {{ isRecording ? "Stop" : "Start" }} Recording
+            {{ isConnected ? "Disconnect" : "Connect" }}
         </v-btn>
-        <div color="text--error" v-if="errorText">{{ errorText }}</div>
+        <div class="error--text" v-if="errorText">{{ errorText }}</div>
         <div class="mt-3" v-if="statusText">{{ statusText }}</div>
     </div>
 </template>
 
 <script lang="ts">
-import Vue from "vue";
-import Component from "vue-class-component";
-import { Watch } from "vue-property-decorator";
-import { ipcRenderer, IpcMessageEvent } from "electron";
+import { Vue, Component } from "vue-property-decorator";
+import SimClientManager from "../../SimClients/SimClientManager";
 
 @Component
 export default class RecordPanel extends Vue {
 
-    public isRecording = false;
     public errorText = "";
     public statusText = "";
     public selectedClient = "";
-    public clients: string[] = [];
 
-    @Watch("clients")
-    onClientsChanged() {
-        if (this.clients.length >= 1) {
-            this.selectedClient = this.clients[0];
-        }
+    get scm() {
+        return this.$store.state.scManager as SimClientManager;
+    }
+
+    get clients() {
+        return this.scm.clients.map((c) => c.name);
+    }
+
+    get isConnected() {
+        return this.scm.activeClient && this.scm.activeClient.isRunning;
+    }
+
+    get status() {
+        return this.scm.activeClient && this.scm.activeClient.status || "";
     }
 
     toggleRecording() {
-        if (this.isRecording) {
-            ipcRenderer.send("stopClient");
-        } else {
-            ipcRenderer.send("startClient", this.selectedClient);
+        this.errorText = "";
+        try {
+            if (this.isConnected) {
+                this.scm.stopClient();
+            } else {
+                this.scm.startClient(this.selectedClient);
+            }
+        } catch (err) {
+            this.errorText = err && err.message || "Error";
         }
-    }
-
-    mounted() {
-        ipcRenderer.on("clientStart", () => { this.isRecording = true; });
-        ipcRenderer.on("clientStop", () => { this.isRecording = false; });
-        ipcRenderer.on("clientError", (ev: IpcMessageEvent, e: string) => { console.log(e); });
-        ipcRenderer.on("clientStatusUpdate", (ev: IpcMessageEvent, s: string) => { this.statusText = s; });
-        ipcRenderer.once("getClientsResult", (ev: IpcMessageEvent, c: string[]) => { this.clients = c; });
-        ipcRenderer.send("getClients");
     }
 
 }

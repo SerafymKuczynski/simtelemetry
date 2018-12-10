@@ -1,3 +1,4 @@
 {
+    "title": "SimTelemetry",
     "whiteListedModules": ["vuetify", "vue-property-decorator", "d3", "lodash"]
 }

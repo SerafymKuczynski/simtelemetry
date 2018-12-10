@@ -1,15 +1,15 @@
-import { default as PC2SimClient } from "./PC2SimClient";
+import Vue from "vue";
+
+import PC2SimClient from "../Games/PC2/PC2SimClient";
 import SimClient from "./SimClient";
-import { EventEmitter } from "events";
+import { ISimClientState } from "./type";
 
-// events
-// clientStart
-// clientStop
-// clientStatusUpdate(status: string)
-// clientError(error: string)
-// clientDataFrame(dataframe: ISimClientState)
+interface ISubscriber {
+    instance: any;
+    listener: (df: ISimClientState) => void;
+}
 
-class SimClientManager extends EventEmitter {
+export default class SimClientManager {
 
     public get clients() {
         return [
@@ -17,18 +17,15 @@ class SimClientManager extends EventEmitter {
         ];
     }
 
-    public get activeClient() {
-        return this._activeClient;
-    }
-
-    private _activeClient?: SimClient;
+    public activeClient?: SimClient;
     private activeTimer?: NodeJS.Timeout;
 
-    public startClient(): void {
+    private subscribers: ISubscriber[] = [];
 
-        if (this._activeClient) {
-            this._activeClient.removeAllListeners();
-            this._activeClient = undefined;
+    public startClient(name: string): void {
+
+        if (this.activeClient) {
+            throw new Error("Can't start new client, while an old one is active");
         }
 
         const clientDescriptor = this.clients.find((x) => x.name === name);
@@ -36,15 +33,13 @@ class SimClientManager extends EventEmitter {
             throw new Error("Failed to find client " + name);
         }
 
-        this._activeClient = new (clientDescriptor.clazz)();
-        this._activeClient.on("stop", () => { this.emit("clientStop"); });
-        this._activeClient.on("status", (s) => { this.emit("clientStatusUpdate", s); });
-        this._activeClient.on("error", (e) => { this.emit("clientError", e); });
-        this._activeClient.start();
-        this.emit("clientStart");
+        Vue.set(this, "activeClient", new (clientDescriptor.clazz)());
+        this.activeClient!.start();
         this.activeTimer = setInterval(() => {
-            if (this._activeClient) {
-                this.emit("clientDataFrame", this._activeClient!.state);
+            if (this.activeClient) {
+                if (this.activeClient.gameIsActive) {
+                    this.emitDataframe(this.activeClient.state);
+                }
             } else {
                 console.log("Timer active but no client");
                 clearInterval(this.activeTimer!);
@@ -55,7 +50,7 @@ class SimClientManager extends EventEmitter {
 
     public stopClient(): void {
 
-        if (!this._activeClient) {
+        if (!this.activeClient) {
             throw new Error("Failed to stop client: No client active");
         }
 
@@ -63,10 +58,23 @@ class SimClientManager extends EventEmitter {
             clearInterval(this.activeTimer);
         }
 
-        this._activeClient.stop();
+        this.activeClient.stop();
+        Vue.set(this, "activeClient", undefined);
 
     }
 
-}
+    public subscribe(instance: any, listener: (df: ISimClientState) => void) {
+        if (!this.subscribers.some((x) => x.instance === instance)) {
+            this.subscribers.push({ instance, listener });
+        }
+    }
 
-export default new SimClientManager();
+    public unsubscribe(instance: any) {
+        this.subscribers = this.subscribers.filter((x) => x.instance !== instance);
+    }
+
+    private emitDataframe(df: ISimClientState) {
+        this.subscribers.forEach((x) => x.listener(df));
+    }
+
+}

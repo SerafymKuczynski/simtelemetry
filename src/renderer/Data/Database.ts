@@ -1,14 +1,20 @@
 import sqljs from "sql.js";
 import * as fs from "fs";
-import * as _ from "lodash";
+import _ from "lodash";
 
-import simClientManager from "../SimClients/SimClientManager";
-import { ISimClientState } from "../SimClients/SimClient";
-import { IType } from "../Games/PC2/Packets";
+import { ISimClientState } from "../SimClients/type";
+import SimClientManager from "../SimClients/SimClientManager";
+import { IType } from "../SimClients/type";
 
-class STDatabase {
+export default class STDatabase {
 
     private db?: sqljs.Database;
+    private counter = 0;
+    private scmanager: SimClientManager;
+
+    public constructor(scmanager: SimClientManager) {
+        this.scmanager = scmanager;
+    }
 
     public async loadFile(file: string): Promise<void> {
         const data = await new Promise<Buffer>((res, rej) => {
@@ -29,23 +35,24 @@ class STDatabase {
     }
 
     public startRecording() {
-        if (!simClientManager.activeClient) { return; }
+        if (!this.scmanager.activeClient) { return; }
 
         this.db = new sqljs.Database();
 
-        // TODO: Initialize tables
-        console.log(this.generateFieldDefinitions(simClientManager.activeClient.fields.values));
+        const fd = this.generateFieldDefinitions(this.scmanager.activeClient.fields.values);
+        this.db.run(`CREATE TABLE frames (frameIndex INTEGER PRIMARY KEY, ${fd.join(", ")});`);
 
-        simClientManager.addListener("clientDataFrame", this.saveDataframe);
-        // TODO
+        this.scmanager.addListener("clientDataFrame", (s) => { this.saveDataframe(s); });
     }
 
     public stopRecording() {
-        simClientManager.removeListener("clientDataFrame", this.saveDataframe);
+        this.scmanager.removeListener("clientDataFrame", this.saveDataframe);
     }
 
     private saveDataframe(state: ISimClientState) {
-        // TODO
+        if (!this.scmanager.activeClient || !this.db || _.isEmpty(state.values)) { return; }
+        const fv = this.getFrameValues(this.scmanager.activeClient.fields.values, state.values);
+        this.db.run(`INSERT INTO frames VALUES (${this.counter++}, ${fv.join(", ")});`);
     }
 
     private generateFieldDefinitions(types: IType[], prefix = ""): string[] {
@@ -59,8 +66,13 @@ class STDatabase {
                     const length = Number.parseInt(result[1], 10);
                     let sqlTypes: string[] = [];
                     for (let i = 0; i < length; i++) {
-                        const arrprefix = (prefix ? prefix + "_" : "") + i;
-                        sqlTypes = sqlTypes.concat(this.getSqlTypes(t, arrprefix));
+                        const arrprefix = (prefix ? prefix + "_" : "") + `${t.name}_${i}`;
+                        const newT: IType = {
+                            name: "",
+                            type: t.type,
+                            structType: t.structType
+                        };
+                        sqlTypes = sqlTypes.concat(this.getSqlTypes(newT, arrprefix));
                     }
                     return sqlTypes;
                 }
@@ -94,6 +106,37 @@ class STDatabase {
 
     }
 
-}
+    private getFrameValues(types: IType[], obj: Record<string, any>): string[] {
+        return _.flatMap(types, (t) => {
+            if (t.type.match(/array/)) {
+                const result = /array (\d+)/.exec(t.type);
+                if (!result) {
+                    throw new Error("Invalid type definition: missing length of array in " + t.name);
+                } else {
+                    const length = Number.parseInt(result[1], 10);
+                    let values: string[] = [];
+                    for (let i = 0; i < length; i++) {
+                        values = values.concat(
+                            this.getFrameValue(t, obj && obj[t.name] && obj[t.name][i] || undefined)
+                        );
+                    }
+                    return values;
+                }
+            } else {
+                return this.getFrameValue(t, obj);
+            }
+        });
+    }
 
-export default new STDatabase();
+    private getFrameValue(t: IType, obj?: Record<string, any>): string[] {
+        if (t.type.match(/struct/)) {
+            return this.getFrameValues(t.structType!, obj && obj[t.name] || {});
+        } else if (t.type.match(/int|short|char|float|double/)) {
+            const value = obj && obj[t.name] || 0;
+            return [value.toString()];
+        } else {
+            return ['"' + (obj && obj[t.name] || "").replace('"', '\\"') + '"'];
+        }
+    }
+
+}

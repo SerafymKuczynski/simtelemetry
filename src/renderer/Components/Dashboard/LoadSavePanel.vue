@@ -22,6 +22,7 @@
 <script lang="ts">
 import Vue from "vue";
 import Component from "vue-class-component";
+import { remote } from "electron";
 
 @Component
 export default class LoadSavePanel extends Vue {
@@ -34,7 +35,14 @@ export default class LoadSavePanel extends Vue {
     }
 
     public save() {
-        // TODO
+        remote.dialog.showSaveDialog({
+            title: "Save recording",
+            filters: [ { name: "sqlite", extensions: ["sqlite"] } ],
+        }, (file) => {
+            if (file) {
+                this.$store.state.database.saveFile(file);
+            }
+        })
     }
 
 }

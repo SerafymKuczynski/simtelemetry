@@ -46,7 +46,8 @@ export default class App extends Vue {
     public readonly navItems = [
         { name: "Dashboard", icon: "dashboard", route: "dashboard" },
         { name: "Settings", icon: "settings" },
-        { name: "Raw Graph", icon: "show_chart", route: "rawgraph" }
+        { name: "Raw Graph", icon: "show_chart", route: "rawgraph" },
+        { name: "Fuel Monitor", icon: "show_chart", route: "fuel" }
     ];
 
     public navigate(target: string) {

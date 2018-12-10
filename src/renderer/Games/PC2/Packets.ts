@@ -1,3 +1,5 @@
+import { IType } from "../../SimClients/type";
+
 // regex
 // ^\s*((?:signed|unsigned|char|short|float|int| )+)(?:s|m)(\w+)(?:\[\d\])?;.*$
 // $2: "$1",
@@ -8,12 +10,6 @@
 export interface IPacketInformation {
     size: number;
     td?: IType[];
-}
-
-export interface IType {
-    name: string;
-    type: string;
-    structType?: IType[];
 }
 
 export const Categories = {
@@ -110,7 +106,7 @@ export const TelemetryDataTypes: IType[] = [
     { name: "TurboBoostPressure", type: "float" },
     { name: "FullPosition", type: "float array 3" },
     { name: "BrakeBias", type: "unsigned char" },
-    { name: "TickCount", type: "unsigned int" }
+    { name: "TelemetryTickCount", type: "unsigned int" }
 ];
 
 export const ParticipantInfoDataTypes: IType[] = [
@@ -138,7 +134,19 @@ export const TimingsDataDataTypes: IType[] = [
     { name: "SplitTime", type: "float" },
     { name: "Participants", type: "struct array 32", structType: ParticipantInfoDataTypes },
     { name: "LocalParticipantIndex", type: "unsigned short" },
-    { name: "TickCount", type: "unsigned int" }
+    { name: "TimingsTickCount", type: "unsigned int" }
+];
+
+export const GameStateDataTypes: IType[] = [
+    { name: "BuildVersionNumber", type: "unsigned short" },
+    { name: "GameState", type: "unsigned char" },
+    { name: "AmbientTemperature", type: "signed char" },
+    { name: "TrackTemperature", type: "signed char" },
+    { name: "RainDensity", type: "unsigned char" },
+    { name: "SnowDensity", type: "unsigned char" },
+    { name: "WindSpeed", type: "signed char" },
+    { name: "WindDirectionX", type: "signed char" },
+    { name: "WindDirectionY", type: "signed char" }
 ];
 
 export const HeaderSize = 12;
@@ -147,7 +155,9 @@ export const TypeInformations: IPacketInformation[] = [
     { size: 308,    td: undefined },
     { size: 1136,   td: undefined },
     { size: 1063,   td: TimingsDataDataTypes },
-    { size: 24,     td: undefined },
+    { size: 24,     td: GameStateDataTypes },
+    { size: 0,      td: undefined },
+    { size: 0,      td: undefined },
     { size: 1024,   td: undefined },
     { size: 0,      td: undefined }
 ];

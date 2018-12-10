@@ -1,4 +1,4 @@
-import { IType } from "./Packets";
+import { IType } from "../../SimClients/type";
 
 function getValue(td: IType, buffer: Buffer, position: number): { newPosition: number, value: any } {
 
