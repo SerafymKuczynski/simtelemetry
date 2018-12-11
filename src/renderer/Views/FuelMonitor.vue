@@ -1,8 +1,50 @@
 <template>
-    <div>
-        <h1>Fuel: {{ fuel.toPrecision(2) }} Liter</h1>
-        <h1>Last Lap: {{ fuelConsumedPerLap.toPrecision(2) }}</h1>
-        <h1>Estimated Fuel per Lap: {{ estimatedFuelConsumedPerLap.toPrecision(2) }}</h1>
+    <div style="width:100%;">
+        <v-container fluid grid-list-xl>
+            <v-layout row wrap>
+
+                <v-flex xs4>
+                    <v-card style="text-align: center;">
+                        <v-card-text>
+                            <div class="title font-weight-light mb-2">Fuel</div>
+                            <h1 class="font-weight-regular">{{ currentFuel.toFixed(2) }} liters</h1>
+                        </v-card-text>
+                    </v-card>
+                </v-flex>
+
+                <v-flex xs4>
+                    <v-card style="text-align: center;">
+                        <v-card-text>
+                            <div class="title font-weight-light mb-2">Last Lap</div>
+                            <h1 class="font-weight-regular">{{ fuelConsumedPerLap.toFixed(2) }} liters</h1>
+                        </v-card-text>
+                    </v-card>
+                </v-flex>
+
+                <v-flex xs4>
+                    <v-card style="text-align: center;">
+                        <v-card-text>
+                            <div class="title font-weight-light mb-2">Estimated Fuel per Lap</div>
+                            <h1 class="font-weight-regular">{{ estimatedFuelConsumedPerLap.toFixed(2) }} liters</h1>
+                        </v-card-text>
+                    </v-card>
+                </v-flex>
+
+                <v-divider></v-divider>
+
+                <v-flex xs12>
+                    <v-card>
+                        <v-card-title primary-title>
+                            <div class="headline">Strategy</div>
+                        </v-card-title>
+                        <v-card-text>
+                            <!-- TODO: Strategy suggestions -->
+                        </v-card-text>
+                    </v-card>
+                </v-flex>
+
+            </v-layout>
+        </v-container>
     </div>
 </template>
 
@@ -35,19 +77,17 @@ export default class FuelMonitor extends Vue {
 
     private calculateFuelPerLap(state: IPC2State) {
         const values = state.values;
-        const lpi = values.LocalParticipantIndex;
-        const lap = values.Participants[lpi].CurrentLap
+        const p = values.Participants[values.LocalParticipantIndex];
+        const lap = p.CurrentLap
         const fuel = values.FuelLevel;
-        if (lap !== this.lastLap && this.lastLap !== -1 && fuel > this.fuelAtBeginningOfLastLap) {
+        if (lap !== this.lastLap && this.lastLap !== -1) {
             this.fuelConsumedPerLap = (this.fuelAtBeginningOfLastLap - fuel) * values.FuelCapacity;
-        } else {
-            this.fuelConsumedPerLap = Number.NaN;
         }
 
         if (this.lastLap !== -1) {
-            const lapPercentage = this // TODO
+            const lapPercentage = p.CurrentLapDistance / state.meta.TrackLength;
             this.estimatedFuelConsumedPerLap =
-                (this.fuelAtBeginningOfLastLap - fuel) * (1 - values.Participants[lpi].CurrentLapDistance)
+                (this.fuelAtBeginningOfLastLap - fuel) * (1 / lapPercentage) * values.FuelCapacity;
         }
 
         if (lap !== this.lastLap) {
