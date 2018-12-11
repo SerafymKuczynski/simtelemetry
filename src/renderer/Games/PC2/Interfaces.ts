@@ -128,3 +128,5 @@ export enum GameState {
     GAME_INGAME_REPLAY,
     GAME_FRONT_END_REPLAY,
 }
+
+export interface IPC2GameState extends ITelemetryData, ITimingsData { }
