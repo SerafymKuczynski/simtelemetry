@@ -1,3 +1,5 @@
+import { ISimClientState } from "../../SimClients/type";
+
 export interface IPacketBase {
     PacketNumber: number;
     CategoryPacketNumber: number;
@@ -129,4 +131,27 @@ export enum GameState {
     GAME_FRONT_END_REPLAY,
 }
 
-export interface IPC2GameState extends ITelemetryData, ITimingsData { }
+export interface IRaceData {
+    WorldFastestLapTime: number;
+    PersonalFastestLapTime: number;
+    PersonalFastestSector1Time: number;
+    PersonalFastestSector2Time: number;
+    PersonalFastestSector3Time: number;
+    WorldFastestSector1Time: number;
+    WorldFastestSector2Time: number;
+    WorldFastestSector3Time: number;
+    TrackLength: number;
+    TrackLocation: string;
+    TrackVariation: string;
+    TranslatedTrackLocation: string;
+    TranslatedTrackVariation: string;
+    LapsTimeInEvent: number;
+    EnforcedPitStopLap: number;
+}
+
+export interface IPC2StateMeta extends IRaceData {}
+export interface IPC2StateValues extends ITelemetryData, ITimingsData { }
+export interface IPC2State extends ISimClientState {
+    meta: IPC2StateMeta;
+    values: IPC2StateValues;
+}

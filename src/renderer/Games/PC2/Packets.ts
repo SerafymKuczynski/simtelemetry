@@ -149,10 +149,28 @@ export const GameStateDataTypes: IType[] = [
     { name: "WindDirectionY", type: "signed char" }
 ];
 
+export const RaceDataDataTypes: IType[] = [
+    { name: "WorldFastestLapTime", type: "float" },
+    { name: "PersonalFastestLapTime", type: "float" },
+    { name: "PersonalFastestSector1Time", type: "float" },
+    { name: "PersonalFastestSector2Time", type: "float" },
+    { name: "PersonalFastestSector3Time", type: "float" },
+    { name: "WorldFastestSector1Time", type: "float" },
+    { name: "WorldFastestSector2Time", type: "float" },
+    { name: "WorldFastestSector3Time", type: "float" },
+    { name: "TrackLength", type: "float" },
+    { name: "TrackLocation", type: "string 64" },
+    { name: "TrackVariation", type: "string 64" },
+    { name: "TranslatedTrackLocation", type: "string 64" },
+    { name: "TranslatedTrackVariation", type: "string 64" },
+    { name: "LapsTimeInEvent", type: "unsigned short" },
+    { name: "EnforcedPitStopLap", type: "signed char" },
+];
+
 export const HeaderSize = 12;
 export const TypeInformations: IPacketInformation[] = [
     { size: 559,    td: TelemetryDataTypes },
-    { size: 308,    td: undefined },
+    { size: 308,    td: RaceDataDataTypes },
     { size: 1136,   td: undefined },
     { size: 1063,   td: TimingsDataDataTypes },
     { size: 24,     td: GameStateDataTypes },

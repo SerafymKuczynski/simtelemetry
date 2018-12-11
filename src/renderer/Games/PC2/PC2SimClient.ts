@@ -1,4 +1,5 @@
 import { createSocket, RemoteInfo, Socket } from "dgram";
+import _ from "lodash";
 
 import * as Interfaces from "./Interfaces";
 import parseMessage from "./MessageParser";
@@ -6,6 +7,7 @@ import * as Packets from "./Packets";
 import SimClient from "../../SimClients/SimClient";
 
 const valuePackets = [ 0, 3 ];
+const metaPackets = [ 1 ];
 
 export default class PC2SimClient extends SimClient {
 
@@ -18,8 +20,8 @@ export default class PC2SimClient extends SimClient {
 
     public get fields() {
         return {
-            meta: [],
-            values: Packets.TelemetryDataTypes.concat(Packets.TimingsDataDataTypes)
+            meta: _.flatMap(metaPackets, (i) => Packets.TelemetryDataTypes[i]),
+            values: _.flatMap(valuePackets, (i) => Packets.TelemetryDataTypes[i])
         };
     }
 
@@ -75,6 +77,8 @@ export default class PC2SimClient extends SimClient {
             const value = parseMessage(msg, td, Packets.HeaderSize).messageObject;
             if (valuePackets.includes(header.PacketType)) {
                 Object.assign(this.state.values, value);
+            } else if (metaPackets.includes(header.PacketType)) {
+                Object.assign(this.state.meta, value);
             }
         }
 

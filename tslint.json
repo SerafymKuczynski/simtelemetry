@@ -10,7 +10,8 @@
         "no-console": false,
         "variable-name": false,
         "no-bitwise": false,
-        "ordered-imports": false
+        "ordered-imports": false,
+        "no-empty-interface": false
     },
     "rulesDirectory": []
 }
