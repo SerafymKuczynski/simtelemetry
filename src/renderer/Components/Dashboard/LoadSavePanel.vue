@@ -30,8 +30,15 @@ export default class LoadSavePanel extends Vue {
     public errorDialog = false;
     public errorText = "";
     
-    public async load() {
-        // TODO
+    public load() {
+        remote.dialog.showOpenDialog({
+            title: "Open recording",
+            filters: [ { name: "sqlite", extensions: ["sqlite"] } ],
+        }, (file) => {
+            if (file && file[0]) {
+                this.$store.state.database.loadFile(file[0]);
+            }
+        })
     }
 
     public save() {

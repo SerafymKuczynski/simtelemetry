@@ -8,7 +8,7 @@ import { IType } from "../SimClients/type";
 
 export default class STDatabase {
 
-    private db?: sqljs.Database;
+    public db?: sqljs.Database;
     private counter = 0;
     private scmanager: SimClientManager;
 
@@ -42,11 +42,11 @@ export default class STDatabase {
         const fd = this.generateFieldDefinitions(this.scmanager.activeClient.fields.values);
         this.db.run(`CREATE TABLE frames (frameIndex INTEGER PRIMARY KEY, ${fd.join(", ")});`);
 
-        this.scmanager.addListener("clientDataFrame", (s) => { this.saveDataframe(s); });
+        this.scmanager.subscribe(this, (s) => { this.saveDataframe(s); });
     }
 
     public stopRecording() {
-        this.scmanager.removeListener("clientDataFrame", this.saveDataframe);
+        this.scmanager.unsubscribe(this);
     }
 
     private saveDataframe(state: ISimClientState) {

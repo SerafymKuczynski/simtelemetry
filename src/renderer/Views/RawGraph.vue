@@ -1,153 +1,164 @@
 <template>
     <div class="fill-height" style="width: 100%;">
-        <graph :data="rawData"></graph>
-        <v-navigation-drawer app clipped right permanent>
-            <v-list>
-                <template v-for="(series, index) in dataSeries">
+        <div v-if="db" class="fill-height" style="width: 100%;">
 
-                    <v-list-tile v-if="!series.subSeries" :key="index" href="javascript:;">
-                        <v-list-tile-action>
-                            <v-checkbox
-                                v-model="series.isActive"
-                                readonly
-                                @click.native="onSeriesActiveChanged(series)">
-                            </v-checkbox>
-                        </v-list-tile-action>
-                        <v-list-tile-content @click="onSeriesActiveChanged(series)">
-                            <v-list-tile-title>{{ series.name }}</v-list-tile-title>
-                        </v-list-tile-content>
-                    </v-list-tile>
+            <canvas ref="canvas"></canvas>
 
-                    <v-list-group v-else :key="index" v-model="series.isExtended">
-                        <v-list-tile slot="activator">
+            <v-navigation-drawer app clipped right permanent>
+                <v-list>
+                    <template v-for="(series, index) in dataSeries">
+
+                        <v-list-tile v-if="!series.subSeries" :key="index" @click="onSeriesActiveChanged(series)">
+                            <v-list-tile-action>
+                                <v-checkbox
+                                    :value="series.isActive"
+                                    readonly>
+                                </v-checkbox>
+                            </v-list-tile-action>
                             <v-list-tile-content>
                                 <v-list-tile-title>{{ series.name }}</v-list-tile-title>
                             </v-list-tile-content>
                         </v-list-tile>
-                        <v-list-tile v-for="subSeries in series.subSeries" :key="subSeries.name">
-                            <v-list-tile href="javascript:;">
-                                <v-list-tile-action>
-                                    <v-checkbox v-model="subSeries.isActive">
-                                    </v-checkbox>
-                                </v-list-tile-action>
-                                <v-list-tile-content @click="subSeries.isActive = !subSeries.isActive">
-                                    <v-list-tile-title>{{ series.name + " " + subSeries.name }}</v-list-tile-title>
+
+                        <v-list-group v-else :key="index" v-model="series.isExtended">
+                            <v-list-tile slot="activator">
+                                <v-list-tile-content>
+                                    <v-list-tile-title>{{ series.name }}</v-list-tile-title>
                                 </v-list-tile-content>
                             </v-list-tile>
-                        </v-list-tile>
-                    </v-list-group>
+                            <v-list-tile v-for="subSeries in series.subSeries" :key="subSeries.name">
+                                <v-list-tile @click="onSeriesActiveChanged(subSeries)">
+                                    <v-list-tile-action>
+                                        <v-checkbox :value="subSeries.isActive">
+                                        </v-checkbox>
+                                    </v-list-tile-action>
+                                    <v-list-tile-content>
+                                        <v-list-tile-title>{{ series.name + " " + subSeries.name }}</v-list-tile-title>
+                                    </v-list-tile-content>
+                                </v-list-tile>
+                            </v-list-tile>
+                        </v-list-group>
 
-                </template>
-            </v-list>
-        </v-navigation-drawer>
+                    </template>
+                </v-list>
+            </v-navigation-drawer>
+        </div>
+
+        <v-alert v-else :value="true" type="info">Please load a file first.</v-alert>
+
     </div>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
 import Component from "vue-class-component";
-import GLine from "@/Components/RawGraph/Line.vue";
-import { DPManagerInstance } from "../Data/LoadFile";
-import DataProvider from "../Data/DataProvider";
-import PC2DataProvider from "../Data/PC2DataProvider";
-import { IRawDataSeries, IDataPoint } from "../Components/RawGraph/interfaces";
-import Graph from "@/Components/RawGraph/Graph.vue";
+import { Database } from "sql.js";
+import Chart from "chart.js";
 
 interface IDataSeries {
-    id: number;
     name: string;
+    dsIndex?: number;
     property?: string;
     unit?: string;
     subSeries?: IDataSeries[];
+    parentSeries?: IDataSeries;
     isActive?: boolean;
-    f?: (d: number|number[]) => number;
 }
 
-@Component({
-    components: { "g-line": GLine, "graph": Graph }
-})
+@Component
 export default class RawGraph extends Vue {
 
-    public rawData: IRawDataSeries[] = [];
+    private chart!: Chart;
 
-    public dataSeries: IDataSeries[] = pc2dataSeries.map((x,i) => {
+    public dataSeries: IDataSeries[] = pc2dataSeries.map((x) => {
         if (x.subSeries) {
-            x.subSeries = x.subSeries.map((y, j) => Object.assign({ isActive: false, id: i * 1000 + j }, y));
+            x.subSeries = x.subSeries.map((y, j) => Object.assign({ isActive: false, parentSeries: x }, y));
             return Object.assign({ isExtended: false }, x);
         } else {
-            return Object.assign({ isActive: false, id: i }, x);
+            return Object.assign({ isActive: false, dsIndex: -1 }, x);
         }
     }) as IDataSeries[];
 
-    private async addSeries(seriesId: number): Promise<void> {
+    get db() {
+        return this.$store.state.database.db as Database;
+    }
 
-        console.log("Add series");
+    private async addSeries(series: IDataSeries) {
 
-        const tempDp = DPManagerInstance.dp as DataProvider | undefined;
-        if (!tempDp || tempDp.game !== "PC2") {
-            return;
-        }
-        const dp = tempDp as PC2DataProvider;
+        if (!this.db) { return; }
 
-        let parentSeries = seriesId;
-        if (seriesId >= 1000) {
-            parentSeries = (seriesId - (seriesId % 1000)) / 1000;
-        }
-
-        const ps = this.dataSeries.find((x) => x.id === parentSeries)!;
-        let transformationFunction: (d: number|number[]) => number;
-        if (seriesId !== parentSeries) {
-            transformationFunction = ps.subSeries!.find((x) => x.id === seriesId)!.f!;
+        let columnName;
+        let label;
+        if (series.parentSeries) {
+            const ps = series.parentSeries;
+            const i = ps.subSeries!.indexOf(series);
+            columnName = ps.property + "_" + [i];
+            label = ps.name + " " + series.name;
         } else {
-            transformationFunction = (d: number|number[]) => d as number;
-        }
-        
-        const pcount = dp.telemetryDataPacketCount;
-        const data: IDataPoint[] = [];
-        for (let i = 0; i < pcount; i++) {
-            const packet = (await dp.getTelemetryDataPacket(i) as any) as { [p: string]: number|number[] };
-            data.push({
-                tick: i,
-                value: transformationFunction(packet[ps.property!])
-            });
+            columnName = series.property;
+            label = series.name;
         }
 
-        this.rawData.push({
-            id: seriesId,
-            data
+        const data = this.db.exec(`SELECT ${columnName} FROM frames;`);
+        console.log(data[0].values.map((i) => i[0] as number));
+        this.chart.data.datasets!.push({
+            label: label,
+            borderColor: "#ff3333",
+            pointRadius: 0,
+            pointHitRadius: 4,
+            data: data[0].values.map((v, i) => ({ x: i, y: v[0] as number }))
         });
-
-        console.log("RawData", this.rawData.length);
+        series.dsIndex = this.chart.data.datasets!.length - 1;
+        this.chart.update();
         
     }
 
     onSeriesActiveChanged(series: IDataSeries) {
         series.isActive = !series.isActive;
         if (series.isActive) {
-            this.addSeries(series.id);
+            this.addSeries(series);
         } else {
-            this.rawData.splice(this.rawData.findIndex((x) => x.id === series.id), 1);
+            this.chart.data.datasets!.splice(series.dsIndex!);
+            series.dsIndex = -1;
+            this.chart.update();
         }
     }
 
     mounted() {
-        /*DPManagerInstance.on("dpChanged", () => this.updateData());
-        if (DPManagerInstance.dp) {
-            this.updateData();
-        }*/
+        const el = this.$refs.canvas as HTMLCanvasElement;
+        this.chart = new Chart(el, {
+            type: "line",
+            data: {
+                datasets: []
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    xAxes: [{
+                        type: 'linear',
+                        position: 'bottom'
+                    }],
+                    yAxes: [{
+                        type: "linear",
+                        position: "left"
+                    }]
+                }
+            }
+        })
     }
+
 }
 
 const pc2VectorSubSeries = [
-    { name: "X", f: (d: number[]) => d[0] },
-    { name: "Y", f: (d: number[]) => d[1] },
-    { name: "Z", f: (d: number[]) => d[2] }
+    { name: "X" },
+    { name: "Y" },
+    { name: "Z" }
 ];
 const pc2TyreSubSeries = [
-    { name: "FL", f: (d: number[]) => d[0] },
-    { name: "FR", f: (d: number[]) => d[1] },
-    { name: "RL", f: (d: number[]) => d[2] },
-    { name: "RR", f: (d: number[]) => d[3] }
+    { name: "FL" },
+    { name: "FR" },
+    { name: "RL" },
+    { name: "RR" }
 ];
 const pc2dataSeries = [
     { name: "Unfiltered Throttle", property: "UnfilteredThrottle" },
@@ -184,6 +195,3 @@ const pc2dataSeries = [
     { name: "Brake Bias", property: "BrakeBias" }
 ];
 </script>
-
-<style>
-</style>
