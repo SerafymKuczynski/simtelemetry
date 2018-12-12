@@ -39,6 +39,12 @@
                         </v-card-title>
                         <v-card-text>
                             <!-- TODO: Strategy suggestions -->
+                            <c-timeline
+                                class="mb-3"
+                                :currentLap="currentLap"
+                                :totalLaps="totalLaps"
+                                :stops="stops"
+                            ></c-timeline>
                         </v-card-text>
                     </v-card>
                 </v-flex>
@@ -52,8 +58,13 @@
 import { Component, Vue } from "vue-property-decorator";
 import SimClientManager from "../SimClients/SimClientManager";
 import { IPC2State } from "../Games/PC2/Interfaces";
+import Timeline from "@/Components/Fuel/Timeline.vue";
 
-@Component
+@Component({
+    components: {
+        'c-timeline': Timeline
+    }
+})
 export default class FuelMonitor extends Vue {
 
     currentFuel = 0;
@@ -61,12 +72,17 @@ export default class FuelMonitor extends Vue {
     fuelAtBeginningOfLastLap = -1;
     fuelConsumedPerLap = 0;
     estimatedFuelConsumedPerLap = 0;
+    lapHistory: number[] = [];
+
+    totalLaps = 60;
+    currentLap = 0;
+    stops = [ 15, 30, 45 ];
 
     mounted() {
         const scm = this.$store.state.scManager as SimClientManager;
         scm.subscribe(this, (df) => {
             this.$set(this, "currentFuel", df.values.FuelLevel * df.values.FuelCapacity);
-            this.calculateFuelPerLap(df as IPC2State);
+            this.calculate(df as IPC2State);
         });
     }
 
@@ -75,25 +91,56 @@ export default class FuelMonitor extends Vue {
         scm.unsubscribe(this);
     }
 
-    private calculateFuelPerLap(state: IPC2State) {
-        const values = state.values;
-        const p = values.Participants[values.LocalParticipantIndex];
-        const lap = p.CurrentLap
-        const fuel = values.FuelLevel;
-        if (lap !== this.lastLap && this.lastLap !== -1) {
-            this.fuelConsumedPerLap = (this.fuelAtBeginningOfLastLap - fuel) * values.FuelCapacity;
+    private calculate(state: IPC2State) {
+        const { TrackLength, LapsTimeInEvent } = state.meta;
+        const { FuelLevel, FuelCapacity, Participants, LocalParticipantIndex } = state.values;
+        const p = Participants[LocalParticipantIndex];
+        const { CurrentLap, CurrentLapDistance } = p;
+        this.currentLap = p.CurrentLap;
+
+        // Fuel consumption
+        if (this.currentLap !== this.lastLap && this.lastLap !== -1) {
+            this.fuelConsumedPerLap = (this.fuelAtBeginningOfLastLap - FuelLevel) * FuelCapacity;
+            this.lapHistory.push(this.fuelConsumedPerLap);
         }
 
         if (this.lastLap !== -1) {
-            const lapPercentage = p.CurrentLapDistance / state.meta.TrackLength;
+            const lapPercentage = CurrentLapDistance / TrackLength;
             this.estimatedFuelConsumedPerLap =
-                (this.fuelAtBeginningOfLastLap - fuel) * (1 / lapPercentage) * values.FuelCapacity;
+                (this.fuelAtBeginningOfLastLap - FuelLevel) * (1 / lapPercentage) * FuelCapacity;
         }
 
-        if (lap !== this.lastLap) {
-            this.lastLap = lap;
-            this.fuelAtBeginningOfLastLap = values.FuelLevel;
+        if (this.currentLap !== this.lastLap) {
+            this.lastLap = this.currentLap;
+            this.fuelAtBeginningOfLastLap = FuelLevel;
         }
+
+        // Strategy
+        if ((LapsTimeInEvent & 1 << 16) === 1) {
+            // this is not a lap based session (e.g. time trial)
+            return;
+        }
+        this.totalLaps = LapsTimeInEvent & ~(1 << 16);
+
+        const avgFuelConsumption: number = this.lapHistory.slice(-5).reduce((total, amount, index, array) => {
+            total += amount;
+            if (index === array.length - 1) { 
+                return total / array.length;
+            } else { 
+                return total;
+            }
+        }, 0);
+        
+        // next stop
+        const fuelLeftInLiters = FuelLevel * FuelCapacity;
+        const lapsRemainingWithCurrentFuel = Math.floor(fuelLeftInLiters / avgFuelConsumption);
+        const stops = [ CurrentLap + lapsRemainingWithCurrentFuel ];
+
+        const lapsPerStint = Math.floor(FuelCapacity / avgFuelConsumption);
+        for (let i = stops[0]; i < this.totalLaps; i += lapsPerStint) {
+            stops.push(i);
+        }
+        this.stops = stops;
 
     }
 
