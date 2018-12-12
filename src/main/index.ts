@@ -11,7 +11,7 @@ function createMainWindow() {
     const window = new BrowserWindow();
 
     if (isDevelopment) {
-        // window.webContents.openDevTools();
+        window.webContents.openDevTools();
     }
 
     if (isDevelopment) {
@@ -34,6 +34,8 @@ function createMainWindow() {
             window.focus();
         });
     });
+
+    window.maximize();
 
     return window;
 }

@@ -8,9 +8,9 @@
         <div
             v-for="(stop, i) in percentageStops"
             :key="i"
-            :class="['timeline', '__dot', { '--active': progress >= stop }]"
-            :style="{ 'left': stop + '%' }"
-        ></div>
+            :class="['timeline', '__dot', { '--active': progress >= stop.v }]"
+            :style="{ 'left': stop.v + '%' }"
+        ><div>Lap {{ stop.l }}</div></div>
 
     </div>
 </template>
@@ -38,7 +38,7 @@ export default class Timeline extends Vue {
         if (this.totalLaps === 0) {
             return [];
         } else {
-            return this.stops.map((s) => 100 * s / this.totalLaps);
+            return this.stops.map((s) => ({ l: s, v: 100 * s / this.totalLaps }));
         }
     }
 
@@ -48,6 +48,7 @@ export default class Timeline extends Vue {
 <style lang="scss">
 .timeline {
     position: relative;
+    height: 35px;
 
     .__bar {
         position: absolute;
@@ -69,14 +70,22 @@ export default class Timeline extends Vue {
         width: 20px;
         height: 20px;
         border-radius: 50%;
-        border: 2px solid lightgray;
-        background-color: white;
+        background-color: lightgray;
         position: absolute;
         top: -7px;
-        transition: border-color 0.4s linear, left 0.4s ease-in-out;
+        transition: background-color 0.4s linear, left 0.4s ease-in-out;
 
         &.--active {
-            border-color: deepskyblue;
+            background-color: deepskyblue;
+        }
+
+        & > div {
+            text-align: center;
+            position: absolute;
+            white-space: nowrap;
+            top: 125%;
+            left: 50%;
+            transform: translate(-50%, 0);
         }
 
     }
