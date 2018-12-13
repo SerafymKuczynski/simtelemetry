@@ -150,7 +150,7 @@ export interface IRaceData {
 }
 
 export interface IPC2StateMeta extends IRaceData {}
-export interface IPC2StateValues extends ITelemetryData, ITimingsData { }
+export interface IPC2StateValues extends ITelemetryData, ITimingsData, IGameState { }
 export interface IPC2State extends ISimClientState {
     meta: IPC2StateMeta;
     values: IPC2StateValues;

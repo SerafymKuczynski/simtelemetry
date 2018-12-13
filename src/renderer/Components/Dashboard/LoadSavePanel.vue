@@ -1,5 +1,11 @@
 <template>
-    <v-layout>
+    <v-layout row wrap>
+        <v-flex xs12>
+            <v-btn block @click="toggleRecording">
+                <span v-if="isRecording" class="recordDot mr-2">&#x2B24;</span>
+                {{ isRecording ? "Stop" : "Start" }} Recording
+            </v-btn>
+        </v-flex>
         <v-flex xs6>
             <v-btn block @click="load">Load Recording</v-btn>
         </v-flex>
@@ -29,6 +35,10 @@ export default class LoadSavePanel extends Vue {
 
     public errorDialog = false;
     public errorText = "";
+
+    get isRecording() {
+        return this.$store.state.database.isRecording;
+    }
     
     public load() {
         remote.dialog.showOpenDialog({
@@ -52,9 +62,23 @@ export default class LoadSavePanel extends Vue {
         })
     }
 
+    public toggleRecording() {
+        if (this.isRecording) {
+            this.$store.state.database.stopRecording();
+        } else {
+            this.$store.state.database.startRecording();
+        }
+    }
+
 }
 </script>
 
 <style>
-
+@keyframes recordAnimation {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.recordDot {
+    animation: recordAnimation 0.5s alternate 0s infinite;
+}
 </style>

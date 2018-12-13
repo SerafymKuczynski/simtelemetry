@@ -6,7 +6,7 @@ import parseMessage from "./MessageParser";
 import * as Packets from "./Packets";
 import SimClient from "../../SimClients/SimClient";
 
-const valuePackets = [ 0, 3 ];
+const valuePackets = [ 0, 3, 4 ];
 const metaPackets = [ 1 ];
 
 export default class PC2SimClient extends SimClient {
@@ -20,8 +20,8 @@ export default class PC2SimClient extends SimClient {
 
     public get fields() {
         return {
-            meta: _.flatMap(metaPackets, (i) => Packets.TelemetryDataTypes[i]),
-            values: _.flatMap(valuePackets, (i) => Packets.TelemetryDataTypes[i])
+            meta: _.flatMap(metaPackets, (i) => Packets.TypeInformations[i].td!),
+            values: _.flatMap(valuePackets, (i) => Packets.TypeInformations[i].td!)
         };
     }
 

@@ -57,6 +57,7 @@ import Chart from "chart.js";
 
 interface IDataSeries {
     name: string;
+    f?: (x: number) => number;
     dsIndex?: number;
     property?: string;
     unit?: string;
@@ -100,13 +101,16 @@ export default class RawGraph extends Vue {
         }
 
         const data = this.db.exec(`SELECT ${columnName} FROM frames;`);
-        console.log(data[0].values.map((i) => i[0] as number));
+        let values = data[0].values.map((v) => v[0] as number);
+        if (series.f) {
+            values = values.map(series.f);
+        }
         this.chart.data.datasets!.push({
             label: label,
             borderColor: "#ff3333",
             pointRadius: 0,
             pointHitRadius: 4,
-            data: data[0].values.map((v, i) => ({ x: i, y: v[0] as number }))
+            data: values.map((v, i) => ({ x: i, y: v }))
         });
         series.dsIndex = this.chart.data.datasets!.length - 1;
         this.chart.update();
@@ -160,7 +164,7 @@ const pc2TyreSubSeries = [
     { name: "RL" },
     { name: "RR" }
 ];
-const pc2dataSeries = [
+const pc2dataSeries: IDataSeries[] = [
     { name: "Unfiltered Throttle", property: "UnfilteredThrottle" },
     { name: "Unfiltered Brake", property: "UnfilteredBrake" },
     { name: "Unfiltered Steering", property: "UnfilteredSteering" },
@@ -177,7 +181,13 @@ const pc2dataSeries = [
     { name: "Speed", property: "Speed" },
     { name: "RPM", property: "Rpm" },
     { name: "Steering", property: "Steering" },
-    { name: "Gear", property: "GearNumGears" },
+    { name: "Gear", property: "GearNumGears", f: (g) => {
+        let gear = (g & 0x0F);
+        if (gear >= 8) {
+            gear = -(~(gear - 1) & 0x0F);
+        }
+        return gear;
+    } },
     { name: "Boost", property: "BoostAmount" },
     { name: "Crash State", property: "CrashState" },
     { name: "Odometer", property: "OdometerKM", unit: "km" },

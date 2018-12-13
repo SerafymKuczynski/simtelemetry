@@ -9,6 +9,7 @@ import { IType } from "../SimClients/type";
 export default class STDatabase {
 
     public db?: sqljs.Database;
+    public isRecording = false;
     private counter = 0;
     private scmanager: SimClientManager;
 
@@ -36,17 +37,16 @@ export default class STDatabase {
 
     public startRecording() {
         if (!this.scmanager.activeClient) { return; }
-
         this.db = new sqljs.Database();
-
         const fd = this.generateFieldDefinitions(this.scmanager.activeClient.fields.values);
         this.db.run(`CREATE TABLE frames (frameIndex INTEGER PRIMARY KEY, ${fd.join(", ")});`);
-
         this.scmanager.subscribe(this, (s) => { this.saveDataframe(s); });
+        this.isRecording = true;
     }
 
     public stopRecording() {
         this.scmanager.unsubscribe(this);
+        this.isRecording = false;
     }
 
     private saveDataframe(state: ISimClientState) {
@@ -55,7 +55,7 @@ export default class STDatabase {
         this.db.run(`INSERT INTO frames VALUES (${this.counter++}, ${fv.join(", ")});`);
     }
 
-    private generateFieldDefinitions(types: IType[], prefix = ""): string[] {
+    private generateFieldDefinitions(types: IType[], prefix: string[] = []): string[] {
         return _.flatMap(types, (t) => {
 
             if (t.type.match(/array/)) {
@@ -66,13 +66,12 @@ export default class STDatabase {
                     const length = Number.parseInt(result[1], 10);
                     let sqlTypes: string[] = [];
                     for (let i = 0; i < length; i++) {
-                        const arrprefix = (prefix ? prefix + "_" : "") + `${t.name}_${i}`;
                         const newT: IType = {
                             name: "",
                             type: t.type,
                             structType: t.structType
                         };
-                        sqlTypes = sqlTypes.concat(this.getSqlTypes(newT, arrprefix));
+                        sqlTypes = sqlTypes.concat(this.getSqlTypes(newT, prefix.concat([ t.name, i.toString() ])));
                     }
                     return sqlTypes;
                 }
@@ -83,14 +82,13 @@ export default class STDatabase {
         });
     }
 
-    private getSqlTypes(td: IType, prefix: string): string[] {
+    private getSqlTypes(td: IType, prefix: string[] = []): string[] {
 
         let sqlType;
         const type = td.type;
 
         if (type.match(/struct/)) {
-            const structPrefix = (prefix ? prefix + "_" : "") + td.name;
-            return this.generateFieldDefinitions(td.structType!, structPrefix);
+            return this.generateFieldDefinitions(td.structType!, prefix.concat(td.name));
         } else if (type.match(/int|short|char/)) {
             sqlType = "INTEGER";
         } else if (type.match(/(float|double)/)) {
@@ -102,7 +100,8 @@ export default class STDatabase {
             sqlType = "NULL";
         }
 
-        return [(prefix ? prefix + "_" : "") + td.name + " " + sqlType];
+        const columnName = prefix.concat(td.name).filter((s) => !!s).join("_");
+        return [`${columnName} ${sqlType}`];
 
     }
 
@@ -117,7 +116,7 @@ export default class STDatabase {
                     let values: string[] = [];
                     for (let i = 0; i < length; i++) {
                         values = values.concat(
-                            this.getFrameValue(t, obj && obj[t.name] && obj[t.name][i] || undefined)
+                            this.getFrameValue(t, obj && obj[t.name] || undefined, i)
                         );
                     }
                     return values;
@@ -128,14 +127,15 @@ export default class STDatabase {
         });
     }
 
-    private getFrameValue(t: IType, obj?: Record<string, any>): string[] {
+    private getFrameValue(t: IType, obj?: Record<string, any>, index = -1): string[] {
+        const o = ((index > -1) ? (obj && obj[index]) : (obj && obj[t.name])) || undefined;
         if (t.type.match(/struct/)) {
-            return this.getFrameValues(t.structType!, obj && obj[t.name] || {});
+            return this.getFrameValues(t.structType!, o || {});
         } else if (t.type.match(/int|short|char|float|double/)) {
-            const value = obj && obj[t.name] || 0;
+            const value = o || 0;
             return [value.toString()];
         } else {
-            return ['"' + (obj && obj[t.name] || "").replace('"', '\\"') + '"'];
+            return ['"' + (o || "").replace('"', '\\"') + '"'];
         }
     }
 
