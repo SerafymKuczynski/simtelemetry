@@ -47,7 +47,7 @@ export default class App extends Vue {
         { name: "Dashboard", icon: "dashboard", route: "dashboard" },
         { name: "Settings", icon: "settings" },
         { name: "Raw Graph", icon: "show_chart", route: "rawgraph" },
-        { name: "Fuel Monitor", icon: "show_chart", route: "fuel" }
+        { name: "Race Engineer", icon: "headset_mic", route: "engineer" }
     ];
 
     public navigate(target: string) {

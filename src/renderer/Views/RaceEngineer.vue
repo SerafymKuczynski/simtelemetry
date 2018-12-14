@@ -30,8 +30,6 @@
                     </v-card>
                 </v-flex>
 
-                <v-divider></v-divider>
-
                 <v-flex xs12>
                     <v-card>
                         <v-card-title primary-title>
@@ -44,6 +42,36 @@
                                 :totalLaps="lapsInEvent"
                                 :stops="strategy"
                             ></c-timeline>
+                        </v-card-text>
+                    </v-card>
+                </v-flex>
+
+                <v-flex xs8>
+                    <v-card>
+                        <v-card-text>
+                            <v-layout>
+                                <v-flex class="d-flex" style="justify-content:center;">
+                                    <div class="headline" style="align-self:center;text-align:center;">Lockup Detector</div>
+                                </v-flex>
+                                <v-flex style="text-align:center;">
+                                    <div class="lockup-container">
+                                        <div class="tire">
+                                            <div class="tire __lockup" :style="{ 'opacity': lockupValues[0] / 60 }"></div>
+                                        </div>
+                                        <div class="tire">
+                                            <div class="tire __lockup" :style="{ 'opacity': lockupValues[1] / 60 }"></div>
+                                        </div>
+                                    </div>
+                                    <div class="lockup-container">
+                                        <div class="tire">
+                                            <div class="tire __lockup" :style="{ 'opacity': lockupValues[2] / 60 }"></div>
+                                        </div>
+                                        <div class="tire">
+                                            <div class="tire __lockup" :style="{ 'opacity': lockupValues[3] / 60 }"></div>
+                                        </div>
+                                    </div>
+                                </v-flex>
+                            </v-layout>
                         </v-card-text>
                     </v-card>
                 </v-flex>
@@ -64,7 +92,7 @@ import Timeline from "@/Components/Fuel/Timeline.vue";
         'c-timeline': Timeline
     }
 })
-export default class FuelMonitor extends Vue {
+export default class RaceEngineer extends Vue {
 
     // These variables come from PC2
     trackLength = 0;
@@ -78,6 +106,7 @@ export default class FuelMonitor extends Vue {
     fuelAtBeginningOfLastLap = -1;
     lapHistory: number[] = [];
     stops: number[] = [];
+    lockupValues = [0, 0, 0, 0];
 
     /**
      * @returns Current fuel level in the car in liters
@@ -143,7 +172,7 @@ export default class FuelMonitor extends Vue {
 
     private calculate(state: IPC2State) {
         const { TrackLength, LapsTimeInEvent } = state.meta;
-        const { FuelLevel, FuelCapacity, Participants, LocalParticipantIndex } = state.values;
+        const { FuelLevel, FuelCapacity, Participants, LocalParticipantIndex, Speed, TyreRPS } = state.values;
         const p = Participants[LocalParticipantIndex];
         const { CurrentLap, CurrentLapDistance } = p;
         this.trackLength = TrackLength || 0;
@@ -183,6 +212,16 @@ export default class FuelMonitor extends Vue {
             this.fuelAtBeginningOfLastLap = FuelLevel || 0;
         }
 
+        TyreRPS.forEach((v, i) => {
+            if (Speed > 5 && Math.abs(v) < 1) {
+                if (this.lockupValues[i] < 60) {
+                    this.lockupValues[i]++;
+                }
+            } else if (this.lockupValues[i] > 0) {
+                this.lockupValues[i]--;
+            }
+        });
+
     }
 
     private reset() {
@@ -193,3 +232,24 @@ export default class FuelMonitor extends Vue {
 
 }
 </script>
+
+<style>
+.lockup-container {
+    display: inline-block;
+}
+
+.tire {
+    width: 30px;
+    height: 50px;
+    position: relative;
+    background-color: gray;
+    margin: 10px;
+}
+.tire > .__lockup {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background-color: red;
+}
+</style>
+

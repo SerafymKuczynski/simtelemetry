@@ -4,7 +4,7 @@ Vue.use(Router);
 
 import Dashboard from "@/Views/Dashboard.vue";
 import RawGraph from "@/Views/RawGraph.vue";
-import FuelMonitor from "@/Views/FuelMonitor.vue";
+import RaceEngineer from "@/Views/RaceEngineer.vue";
 
 export default new Router({
     routes: [
@@ -19,9 +19,9 @@ export default new Router({
             component: RawGraph
         },
         {
-            path: "fuel",
-            name: "fuel",
-            component: FuelMonitor
+            path: "engineer",
+            name: "engineer",
+            component: RaceEngineer
         },
         {
             path: "*",
